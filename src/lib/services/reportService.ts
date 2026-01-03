@@ -1,13 +1,13 @@
 import { format } from 'date-fns';
-import * as db from '../mock/mockDb.ts';
-import { buildDailyMetrics, calculateAverages, getHDPStatus } from '../mock/calculations.ts';
+import * as db from '../mock/mockDb';
+import { buildDailyMetrics, calculateAverages, getHDPStatus } from '../mock/calculations';
 import type { 
   DashboardSummary, 
   KandangStatus, 
   DailyMetrics, 
   RankingEntry,
   ReportFilters 
-} from '../mock/types.ts';
+} from '../mock/types';
 
 export const reportService = {
   getDashboardSummary(date?: string): DashboardSummary {

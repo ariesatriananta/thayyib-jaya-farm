@@ -23,9 +23,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { EmptyState } from '@/components/common/EmptyState';
-import { LoadingState } from '@/components/common/LoadingState';
-import { buildReportData } from '@/lib/domain/reporting';
-import { getHDPStatus } from '@/lib/domain/calculations';
+import { kandangService } from '@/lib/services/kandangService';
+import { reportService } from '@/lib/services/reportService';
+import { getHDPStatus } from '@/lib/mock/calculations';
 import { BarChart3, TrendingUp, Trophy, Filter } from 'lucide-react';
 import {
   LineChart,
@@ -39,9 +39,6 @@ import {
   BarChart,
   Bar,
 } from 'recharts';
-import { useQuery } from '@tanstack/react-query';
-import { getKandangAll } from '@/services/api/kandang';
-import { getRecordings } from '@/services/api/recordings';
 
 const Reports = () => {
   const [filters, setFilters] = useState({
@@ -51,34 +48,13 @@ const Reports = () => {
   });
   const [showFilters, setShowFilters] = useState(true);
 
-  const {
-    data: kandangList = [],
-    isLoading: kandangLoading,
-    error: kandangError,
-  } = useQuery({
-    queryKey: ['kandang'],
-    queryFn: getKandangAll,
-  });
-
-  const {
-    data: recordings = [],
-    isLoading: recordingsLoading,
-    error: recordingsError,
-  } = useQuery({
-    queryKey: ['recordings'],
-    queryFn: () => getRecordings(),
-  });
+  const kandangList = kandangService.getAll();
 
   const reportData = useMemo(() => {
-    if (kandangLoading || recordingsLoading) {
-      return { dailyMetrics: [], trendData: [], ranking: [] };
-    }
-    return buildReportData(filters, kandangList, recordings);
-  }, [filters, kandangList, recordings, kandangLoading, recordingsLoading]);
+    return reportService.getReportData(filters);
+  }, [filters]);
 
   const { dailyMetrics, trendData, ranking } = reportData;
-  const isLoading = kandangLoading || recordingsLoading;
-  const hasError = kandangError || recordingsError;
 
   return (
     <AppLayout title="Laporan & Analisis" subtitle="Analisis performa kandang">
@@ -141,15 +117,7 @@ const Reports = () => {
           )}
         </Card>
 
-        {isLoading ? (
-          <LoadingState />
-        ) : hasError ? (
-          <EmptyState
-            title="Gagal memuat data"
-            description="Silakan coba lagi beberapa saat."
-            icon={<BarChart3 className="w-8 h-8 text-muted-foreground" />}
-          />
-        ) : dailyMetrics.length === 0 ? (
+        {dailyMetrics.length === 0 ? (
           <EmptyState
             title="Tidak ada data"
             description="Tidak ditemukan data untuk periode dan kandang yang dipilih."

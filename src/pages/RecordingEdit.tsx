@@ -14,38 +14,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { kandangService } from '@/lib/services/kandangService';
+import { recordingService } from '@/lib/services/recordingService';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
-import { LoadingState } from '@/components/common/LoadingState';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getKandangAll } from '@/services/api/kandang';
-import { getRecordingById, updateRecording } from '@/services/api/recordings';
 
 const RecordingEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  const {
-    data: kandangList = [],
-    isLoading: kandangLoading,
-    error: kandangError,
-  } = useQuery({
-    queryKey: ['kandang'],
-    queryFn: getKandangAll,
-  });
-
-  const {
-    data: recording,
-    isLoading: recordingLoading,
-    error: recordingError,
-  } = useQuery({
-    queryKey: ['recordings', id],
-    queryFn: () => (id ? getRecordingById(id) : Promise.resolve(null)),
-    enabled: Boolean(id),
-  });
+  const kandangList = kandangService.getAll();
 
   const [formData, setFormData] = useState({
     kandangId: '',
@@ -59,20 +38,28 @@ const RecordingEdit = () => {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    if (!recording) return;
-    setFormData({
-      kandangId: recording.kandangId,
-      date: recording.date,
-      feedInKg: recording.feedInKg.toString(),
-      feedRemainingKg: recording.feedRemainingKg.toString(),
-      eggsKg: recording.eggsKg.toString(),
-      eggsCount: recording.eggsCount.toString(),
-      deadChickenCount: recording.deadChickenCount.toString(),
-      notes: recording.notes,
-    });
-  }, [recording]);
+    if (id) {
+      const recording = recordingService.getById(id);
+      if (recording) {
+        setFormData({
+          kandangId: recording.kandangId,
+          date: recording.date,
+          feedInKg: recording.feedInKg.toString(),
+          feedRemainingKg: recording.feedRemainingKg.toString(),
+          eggsKg: recording.eggsKg.toString(),
+          eggsCount: recording.eggsCount.toString(),
+          deadChickenCount: recording.deadChickenCount.toString(),
+          notes: recording.notes,
+        });
+      } else {
+        setNotFound(true);
+      }
+    }
+  }, [id]);
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -101,57 +88,45 @@ const RecordingEdit = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof updateRecording>[1] }) =>
-      updateRecording(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['recordings'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validate() || !id) return;
+
+    setIsSubmitting(true);
+
+    try {
+      recordingService.update(id, {
+        kandangId: formData.kandangId,
+        date: formData.date,
+        feedInKg: parseFloat(formData.feedInKg),
+        feedRemainingKg: parseFloat(formData.feedRemainingKg) || 0,
+        eggsKg: parseFloat(formData.eggsKg),
+        eggsCount: parseInt(formData.eggsCount),
+        deadChickenCount: parseInt(formData.deadChickenCount) || 0,
+        notes: formData.notes,
+      });
+
       toast({
         title: 'Berhasil',
         description: 'Data pencatatan berhasil diperbarui.',
       });
+
       navigate('/recordings');
-    },
-    onError: () => {
+    } catch (error) {
       toast({
         title: 'Error',
         description: 'Gagal menyimpan data. Silakan coba lagi.',
         variant: 'destructive',
       });
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validate() || !id) return;
-    const feedInKg = parseFloat(formData.feedInKg);
-    const feedRemainingKg = parseFloat(formData.feedRemainingKg) || 0;
-    const feedUsedKg = Math.max(0, feedInKg - feedRemainingKg);
-
-    updateMutation.mutate({
-      id,
-      data: {
-        kandangId: formData.kandangId,
-        date: formData.date,
-        feedInKg,
-        feedRemainingKg,
-        feedUsedKg,
-        eggsKg: parseFloat(formData.eggsKg),
-        eggsCount: parseInt(formData.eggsCount),
-        deadChickenCount: parseInt(formData.deadChickenCount) || 0,
-        notes: formData.notes,
-      },
-    });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const feedUsed = Math.max(0, (parseFloat(formData.feedInKg) || 0) - (parseFloat(formData.feedRemainingKg) || 0));
 
-  const isLoading = kandangLoading || recordingLoading;
-  const hasError = kandangError || recordingError;
-
-  if (!isLoading && !recording && id) {
+  if (notFound) {
     return (
       <AppLayout title="Edit Pencatatan" subtitle="Data tidak ditemukan">
         <EmptyState
@@ -183,15 +158,7 @@ const RecordingEdit = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <LoadingState />
-            ) : hasError ? (
-              <EmptyState
-                title="Gagal memuat data"
-                description="Silakan coba lagi beberapa saat."
-              />
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Kandang *</Label>
@@ -319,12 +286,11 @@ const RecordingEdit = () => {
                 <Link to="/recordings">
                   <Button type="button" variant="outline">Batal</Button>
                 </Link>
-                <Button type="submit" disabled={updateMutation.isPending}>
-                  {updateMutation.isPending ? 'Menyimpan...' : 'Simpan Perubahan'}
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
                 </Button>
               </div>
-              </form>
-            )}
+            </form>
           </CardContent>
         </Card>
       </div>

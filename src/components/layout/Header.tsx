@@ -1,8 +1,7 @@
 import { Bell, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useQuery } from '@tanstack/react-query';
-import { getSettingsAll } from '@/services/api/settings';
+import { settingsService } from '@/lib/services/settingsService';
 
 interface HeaderProps {
   title: string;
@@ -10,11 +9,7 @@ interface HeaderProps {
 }
 
 export function Header({ title, subtitle }: HeaderProps) {
-  const { data: settingsData = [] } = useQuery({
-    queryKey: ['settings'],
-    queryFn: getSettingsAll,
-  });
-  const settings = settingsData[0];
+  const settings = settingsService.get();
 
   return (
     <header className="gradient-header border-b border-border px-6 py-4 lg:px-8">
@@ -35,7 +30,7 @@ export function Header({ title, subtitle }: HeaderProps) {
           <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-border">
             <div className="text-right">
               <p className="text-sm font-medium">Admin</p>
-              <p className="text-xs text-muted-foreground">{settings?.farmName || 'Farm'}</p>
+              <p className="text-xs text-muted-foreground">{settings.farmName}</p>
             </div>
             <Link to="/login">
               <Button variant="ghost" size="icon">

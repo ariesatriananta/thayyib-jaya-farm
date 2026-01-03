@@ -1,5 +1,5 @@
 import { format, subDays } from 'date-fns';
-import type { Kandang, Recording, Settings } from './types.ts';
+import type { Kandang, Recording, Settings } from './types';
 
 function generateId(): string {
   return Math.random().toString(36).substring(2, 11);

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,62 +12,24 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Plus, X } from 'lucide-react';
+import { kandangService } from '@/lib/services/kandangService';
+import { recordingService } from '@/lib/services/recordingService';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createRecording, getRecordings } from '@/services/api/recordings';
-import { getKandangAll } from '@/services/api/kandang';
+import type { Kandang } from '@/lib/mock/types';
 
 interface QuickAddRecordingProps {
   onClose?: () => void;
 }
 
 export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
+  const navigate = useNavigate();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const today = format(new Date(), 'yyyy-MM-dd');
-  const { data: kandangList = [] } = useQuery({
-    queryKey: ['kandang'],
-    queryFn: getKandangAll,
-  });
-  const activeKandang = kandangList.filter((k) => k.status === 'active');
-
-  const { data: todayRecordings = [] } = useQuery({
-    queryKey: ['recordings', today],
-    queryFn: () => getRecordings({ date: today }),
-  });
-
-  const createMutation = useMutation({
-    mutationFn: createRecording,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['recordings'] });
-      queryClient.invalidateQueries({ queryKey: ['recordings', today] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      toast({
-        title: 'Berhasil',
-        description: 'Data pencatatan berhasil ditambahkan.',
-      });
-      setIsOpen(false);
-      setFormData({
-        kandangId: '',
-        feedInKg: '',
-        feedRemainingKg: '',
-        eggsKg: '',
-        eggsCount: '',
-        deadChickenCount: '0',
-        notes: '',
-      });
-    },
-    onError: () => {
-      toast({
-        title: 'Error',
-        description: 'Gagal menyimpan data. Silakan coba lagi.',
-        variant: 'destructive',
-      });
-    },
-  });
+  const kandangList = kandangService.getActive();
 
   const [formData, setFormData] = useState({
     kandangId: '',
@@ -80,30 +43,58 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (todayRecordings.some((r) => r.kandangId === formData.kandangId)) {
+    setIsSubmitting(true);
+
+    try {
+      // Check if recording already exists
+      if (recordingService.existsForDateAndKandang(today, formData.kandangId)) {
+        toast({
+          title: 'Peringatan',
+          description: 'Data untuk tanggal dan kandang ini sudah ada. Silakan edit data yang ada.',
+          variant: 'destructive',
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      recordingService.create({
+        kandangId: formData.kandangId,
+        date: today,
+        feedInKg: parseFloat(formData.feedInKg) || 0,
+        feedRemainingKg: parseFloat(formData.feedRemainingKg) || 0,
+        eggsKg: parseFloat(formData.eggsKg) || 0,
+        eggsCount: parseInt(formData.eggsCount) || 0,
+        deadChickenCount: parseInt(formData.deadChickenCount) || 0,
+        notes: formData.notes,
+      });
+
       toast({
-        title: 'Peringatan',
-        description: 'Data untuk tanggal dan kandang ini sudah ada. Silakan edit data yang ada.',
+        title: 'Berhasil',
+        description: 'Data pencatatan berhasil ditambahkan.',
+      });
+
+      setIsOpen(false);
+      setFormData({
+        kandangId: '',
+        feedInKg: '',
+        feedRemainingKg: '',
+        eggsKg: '',
+        eggsCount: '',
+        deadChickenCount: '0',
+        notes: '',
+      });
+      
+      // Refresh the page to show new data
+      window.location.reload();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Gagal menyimpan data. Silakan coba lagi.',
         variant: 'destructive',
       });
-      return;
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const feedInKg = parseFloat(formData.feedInKg) || 0;
-    const feedRemainingKg = parseFloat(formData.feedRemainingKg) || 0;
-    const feedUsedKg = Math.max(0, feedInKg - feedRemainingKg);
-
-    createMutation.mutate({
-      kandangId: formData.kandangId,
-      date: today,
-      feedInKg,
-      feedRemainingKg,
-      feedUsedKg,
-      eggsKg: parseFloat(formData.eggsKg) || 0,
-      eggsCount: parseInt(formData.eggsCount) || 0,
-      deadChickenCount: parseInt(formData.deadChickenCount) || 0,
-      notes: formData.notes,
-    });
   };
 
   if (!isOpen) {
@@ -138,7 +129,7 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
                   <SelectValue placeholder="Pilih kandang" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover">
-                  {activeKandang.map((k) => (
+                  {kandangList.map((k) => (
                     <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -219,15 +210,9 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
             </Button>
             <Button 
               type="submit" 
-              disabled={
-                !formData.kandangId ||
-                !formData.feedInKg ||
-                !formData.eggsKg ||
-                !formData.eggsCount ||
-                createMutation.isPending
-              }
+              disabled={!formData.kandangId || !formData.feedInKg || !formData.eggsKg || !formData.eggsCount || isSubmitting}
             >
-              {createMutation.isPending ? 'Menyimpan...' : 'Simpan'}
+              Simpan
             </Button>
           </div>
         </form>

@@ -18,7 +18,7 @@ Changes made via Lovable will be committed automatically to this repo.
 
 If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
-The only requirement is having Node.js installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
 Follow these steps:
 
@@ -30,10 +30,10 @@ git clone <YOUR_GIT_URL>
 cd <YOUR_PROJECT_NAME>
 
 # Step 3: Install the necessary dependencies.
-pnpm install
+npm i
 
 # Step 4: Start the development server with auto-reloading and an instant preview.
-pnpm dev
+npm run dev
 ```
 
 **Edit a file directly in GitHub**
@@ -59,64 +59,6 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
-
-## Backend database (Neon + Drizzle)
-
-1) Set `DATABASE_URL` in `.env` (see `.env.example`).
-2) Run Vercel Functions locally:
-```sh
-pnpm dlx vercel dev
-```
-3) Health check:
-```sh
-curl http://localhost:3000/api/health
-```
-
-## Local Development (Full Stack)
-
-1) Set `DATABASE_URL` in `.env` or `.env.local` (see `.env.example`).
-2) Run frontend + API together:
-```sh
-pnpm dev:full
-```
-3) Test API directly (Vercel Functions):
-```sh
-curl http://localhost:3001/api/health
-```
-4) Test API via frontend proxy (from Vite origin):
-```sh
-fetch('/api/health')
-```
-
-Catatan:
-- `pnpm dev` hanya menjalankan frontend.
-- `pnpm dev:full` menjalankan frontend + Vercel Functions.
-- `pnpm dev:full` memakai `vercel.api.json` agar `vercel dev` tidak menjalankan Vite kedua kali.
-
-## Deploy di Vercel (Vite SPA + Functions)
-
-### Environment variables
-- Production: Project Settings -> Environment Variables -> `DATABASE_URL`
-- Preview: Project Settings -> Environment Variables -> `DATABASE_URL`
-
-### Build output
-- Output directory: `dist` (Vite default)
-- Build command: `pnpm build`
-
-### Health check
-```sh
-curl https://<your-vercel-domain>/api/health
-```
-
-### Migration
-```sh
-pnpm run db:generate
-pnpm run db:migrate
-```
-
-## Catatan keamanan
-- Jangan pernah menaruh `DATABASE_URL` di variabel `VITE_*`.
-- Jangan query database langsung dari frontend; gunakan `/api`.
 
 ## How can I deploy this project?
 

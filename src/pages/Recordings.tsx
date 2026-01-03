@@ -23,10 +23,10 @@ import {
 } from '@/components/ui/table';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { EmptyState } from '@/components/common/EmptyState';
-import { LoadingState } from '@/components/common/LoadingState';
 import { Plus, Edit, Trash2, Filter } from 'lucide-react';
-import { getHDPStatus } from '@/lib/domain/calculations';
-import { buildMetricsByDateRange } from '@/lib/domain/reporting';
+import { kandangService } from '@/lib/services/kandangService';
+import { recordingService } from '@/lib/services/recordingService';
+import { getHDPStatus } from '@/lib/mock/calculations';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -39,14 +39,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { deleteRecording, getRecordings } from '@/services/api/recordings';
-import { getKandangAll } from '@/services/api/kandang';
 
 const Recordings = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   
   const [filters, setFilters] = useState({
     startDate: format(subDays(new Date(), 7), 'yyyy-MM-dd'),
@@ -54,59 +50,34 @@ const Recordings = () => {
     kandangId: searchParams.get('kandang') || 'all',
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const {
-    data: kandangList = [],
-    isLoading: kandangLoading,
-    error: kandangError,
-  } = useQuery({
-    queryKey: ['kandang'],
-    queryFn: getKandangAll,
-  });
+  const kandangList = kandangService.getAll();
 
-  const {
-    data: recordings = [],
-    isLoading: recordingsLoading,
-    error: recordingsError,
-  } = useQuery({
-    queryKey: ['recordings'],
-    queryFn: () => getRecordings(),
-  });
+  const metrics = useMemo(() => {
+    return recordingService.getMetricsByDateRange(
+      filters.startDate,
+      filters.endDate,
+      filters.kandangId === 'all' ? undefined : filters.kandangId
+    );
+  }, [filters.startDate, filters.endDate, filters.kandangId, refreshKey]);
 
-  const deleteMutation = useMutation({
-    mutationFn: deleteRecording,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['recordings'] });
+  const handleDelete = (id: string) => {
+    const success = recordingService.delete(id);
+    if (success) {
       toast({
         title: 'Berhasil',
         description: 'Data pencatatan berhasil dihapus.',
       });
-    },
-    onError: () => {
+      setRefreshKey(prev => prev + 1);
+    } else {
       toast({
         title: 'Error',
         description: 'Gagal menghapus data.',
         variant: 'destructive',
       });
-    },
-  });
-
-  const metrics = useMemo(() => {
-    return buildMetricsByDateRange(
-      filters.startDate,
-      filters.endDate,
-      filters.kandangId,
-      kandangList,
-      recordings
-    );
-  }, [filters.startDate, filters.endDate, filters.kandangId, kandangList, recordings]);
-
-  const handleDelete = (id: string) => {
-    deleteMutation.mutate(id);
+    }
   };
-
-  const isLoading = kandangLoading || recordingsLoading;
-  const hasError = kandangError || recordingsError;
 
   return (
     <AppLayout title="Pencatatan Harian" subtitle="Kelola data pencatatan harian kandang">
@@ -180,14 +151,7 @@ const Recordings = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <LoadingState />
-            ) : hasError ? (
-              <EmptyState
-                title="Gagal memuat data"
-                description="Silakan coba lagi beberapa saat."
-              />
-            ) : metrics.length === 0 ? (
+            {metrics.length === 0 ? (
               <EmptyState
                 title="Belum ada data pencatatan"
                 description="Mulai dengan menambahkan pencatatan harian pertama."
@@ -218,9 +182,7 @@ const Recordings = () => {
                   </TableHeader>
                   <TableBody>
                     {metrics.map((m) => {
-                      const recording = recordings.find(
-                        (r) => r.date === m.date && r.kandangId === m.kandangId
-                      );
+                      const recording = recordingService.getByDateAndKandang(m.date, m.kandangId);
                       return (
                         <TableRow key={`${m.date}-${m.kandangId}`}>
                           <TableCell className="font-medium">
@@ -260,12 +222,12 @@ const Recordings = () => {
                                           Data pencatatan ini akan dihapus permanen dan tidak dapat dikembalikan.
                                         </AlertDialogDescription>
                                       </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                          <AlertDialogCancel>Batal</AlertDialogCancel>
-                                          <AlertDialogAction onClick={() => handleDelete(recording.id)}>
-                                            Hapus
-                                          </AlertDialogAction>
-                                        </AlertDialogFooter>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDelete(recording.id)}>
+                                          Hapus
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
                                     </AlertDialogContent>
                                   </AlertDialog>
                                 </>

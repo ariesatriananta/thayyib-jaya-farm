@@ -1,6 +1,6 @@
 import { format, getWeek, getDay } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
-import type { Recording, Kandang, DailyMetrics } from './types.ts';
+import type { Recording, Kandang, DailyMetrics } from './types';
 
 const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 

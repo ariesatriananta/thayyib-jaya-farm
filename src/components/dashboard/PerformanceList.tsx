@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Trophy, AlertTriangle } from 'lucide-react';
-import type { KandangStatus } from '@/lib/domain/types';
+import type { KandangStatus } from '@/lib/mock/types';
 
 interface PerformanceListProps {
   title: string;
