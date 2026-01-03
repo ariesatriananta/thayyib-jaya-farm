@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/common/StatusBadge';
-import type { KandangStatus } from '@/lib/mock/types';
+import type { KandangStatus } from '@/lib/domain/types';
 import { Home, Egg, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 

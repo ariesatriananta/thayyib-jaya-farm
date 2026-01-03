@@ -1,5 +1,5 @@
-import * as db from '../mock/mockDb';
-import type { Settings } from '../mock/types';
+import * as db from '../mock/mockDb.ts';
+import type { Settings } from '../mock/types.ts';
 
 export const settingsService = {
   get(): Settings {

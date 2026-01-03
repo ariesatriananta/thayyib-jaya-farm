@@ -1,5 +1,5 @@
-import * as db from '../mock/mockDb';
-import type { Kandang } from '../mock/types';
+import * as db from '../mock/mockDb.ts';
+import type { Kandang } from '../mock/types.ts';
 
 export const kandangService = {
   getAll(): Kandang[] {

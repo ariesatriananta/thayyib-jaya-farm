@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -15,16 +15,23 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { kandangService } from '@/lib/services/kandangService';
-import { recordingService } from '@/lib/services/recordingService';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { createRecording, getRecordings } from '@/services/api/recordings';
+import { getKandangAll } from '@/services/api/kandang';
 
 const RecordingNew = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const kandangList = kandangService.getActive();
+  const queryClient = useQueryClient();
+
+  const { data: kandangList = [] } = useQuery({
+    queryKey: ['kandang'],
+    queryFn: getKandangAll,
+  });
+  const activeKandang = kandangList.filter((k) => k.status === 'active');
 
   const [formData, setFormData] = useState({
     kandangId: '',
@@ -38,29 +45,21 @@ const RecordingNew = () => {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [existingWarning, setExistingWarning] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const checkExisting = (date: string, kandangId: string) => {
-    if (date && kandangId) {
-      const existing = recordingService.getByDateAndKandang(date, kandangId);
-      if (existing) {
-        setExistingWarning(`Data untuk kandang ini pada tanggal ${format(new Date(date), 'dd MMM yyyy')} sudah ada.`);
-      } else {
-        setExistingWarning(null);
-      }
-    }
-  };
+  const isCheckReady = Boolean(formData.date && formData.kandangId);
+  const { data: existingRecordings = [] } = useQuery({
+    queryKey: ['recordings', formData.date, formData.kandangId],
+    queryFn: () => getRecordings({ date: formData.date, kandangId: formData.kandangId }),
+    enabled: isCheckReady,
+  });
+  const existingRecording = existingRecordings[0];
+  const existingWarning = useMemo(() => {
+    if (!existingRecording) return null;
+    return `Data untuk kandang ini pada tanggal ${format(new Date(formData.date), 'dd MMM yyyy')} sudah ada.`;
+  }, [existingRecording, formData.date]);
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setErrors(prev => ({ ...prev, [field]: '' }));
-
-    if (field === 'date' || field === 'kandangId') {
-      const newDate = field === 'date' ? value : formData.date;
-      const newKandang = field === 'kandangId' ? value : formData.kandangId;
-      checkExisting(newDate, newKandang);
-    }
   };
 
   const validate = (): boolean => {
@@ -91,43 +90,48 @@ const RecordingNew = () => {
     if (!validate()) return;
 
     if (existingWarning) {
-      const existing = recordingService.getByDateAndKandang(formData.date, formData.kandangId);
-      if (existing) {
-        navigate(`/recordings/${existing.id}`);
+      if (existingRecording) {
+        navigate(`/recordings/${existingRecording.id}`);
         return;
       }
     }
 
-    setIsSubmitting(true);
+    const feedInKg = parseFloat(formData.feedInKg);
+    const feedRemainingKg = parseFloat(formData.feedRemainingKg) || 0;
+    const feedUsedKg = Math.max(0, feedInKg - feedRemainingKg);
 
-    try {
-      recordingService.create({
-        kandangId: formData.kandangId,
-        date: formData.date,
-        feedInKg: parseFloat(formData.feedInKg),
-        feedRemainingKg: parseFloat(formData.feedRemainingKg) || 0,
-        eggsKg: parseFloat(formData.eggsKg),
-        eggsCount: parseInt(formData.eggsCount),
-        deadChickenCount: parseInt(formData.deadChickenCount) || 0,
-        notes: formData.notes,
-      });
+    createMutation.mutate({
+      kandangId: formData.kandangId,
+      date: formData.date,
+      feedInKg,
+      feedRemainingKg,
+      feedUsedKg,
+      eggsKg: parseFloat(formData.eggsKg),
+      eggsCount: parseInt(formData.eggsCount),
+      deadChickenCount: parseInt(formData.deadChickenCount) || 0,
+      notes: formData.notes,
+    });
+  };
 
+  const createMutation = useMutation({
+    mutationFn: createRecording,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recordings'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       toast({
         title: 'Berhasil',
         description: 'Data pencatatan berhasil ditambahkan.',
       });
-
       navigate('/recordings');
-    } catch (error) {
+    },
+    onError: () => {
       toast({
         title: 'Error',
         description: 'Gagal menyimpan data. Silakan coba lagi.',
         variant: 'destructive',
       });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    },
+  });
 
   const feedUsed = Math.max(0, (parseFloat(formData.feedInKg) || 0) - (parseFloat(formData.feedRemainingKg) || 0));
 
@@ -151,9 +155,14 @@ const RecordingNew = () => {
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
                     {existingWarning}
-                    <Link to={`/recordings/${recordingService.getByDateAndKandang(formData.date, formData.kandangId)?.id}`} className="underline ml-1">
+                    {existingRecording && (
+                      <Link
+                        to={`/recordings/${existingRecording.id}`}
+                        className="underline ml-1"
+                      >
                       Edit data yang ada
-                    </Link>
+                      </Link>
+                    )}
                   </AlertDescription>
                 </Alert>
               )}
@@ -169,7 +178,7 @@ const RecordingNew = () => {
                       <SelectValue placeholder="Pilih kandang" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover">
-                      {kandangList.map((k) => (
+                      {activeKandang.map((k) => (
                         <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -285,8 +294,8 @@ const RecordingNew = () => {
                 <Link to="/recordings">
                   <Button type="button" variant="outline">Batal</Button>
                 </Link>
-                <Button type="submit" disabled={isSubmitting || !!existingWarning}>
-                  {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+                <Button type="submit" disabled={createMutation.isPending || !!existingWarning}>
+                  {createMutation.isPending ? 'Menyimpan...' : 'Simpan'}
                 </Button>
               </div>
             </form>

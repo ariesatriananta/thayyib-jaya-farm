@@ -1,8 +1,8 @@
-import { format, getWeek, getDay } from 'date-fns';
-import { id as idLocale } from 'date-fns/locale';
-import type { Recording, Kandang, DailyMetrics } from './types.ts';
+import { format, getWeek, getDay } from "date-fns";
+import { id as idLocale } from "date-fns/locale";
+import type { Recording, Kandang, DailyMetrics } from "./types";
 
-const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 
 export function calculateFeedUsed(feedIn: number, feedRemaining: number): number {
   return Math.max(0, feedIn - feedRemaining);
@@ -24,7 +24,7 @@ export function getCumulativeDeadChickens(
   upToDate: string
 ): number {
   return recordings
-    .filter(r => r.kandangId === kandangId && r.date <= upToDate)
+    .filter((r) => r.kandangId === kandangId && r.date <= upToDate)
     .reduce((sum, r) => sum + r.deadChickenCount, 0);
 }
 
@@ -42,18 +42,20 @@ export function getWeekNumber(date: Date): number {
 }
 
 export function getMonthLabel(date: Date): string {
-  return format(date, 'MMMM yyyy', { locale: idLocale });
+  return format(date, "MMMM yyyy", { locale: idLocale });
 }
 
 export function getDayName(date: Date): string {
   return dayNames[getDay(date)];
 }
 
-export function getHDPStatus(hdpPercent: number): 'excellent' | 'good' | 'warning' | 'danger' {
-  if (hdpPercent >= 85) return 'excellent';
-  if (hdpPercent >= 75) return 'good';
-  if (hdpPercent >= 60) return 'warning';
-  return 'danger';
+export function getHDPStatus(
+  hdpPercent: number
+): "excellent" | "good" | "warning" | "danger" {
+  if (hdpPercent >= 85) return "excellent";
+  if (hdpPercent >= 75) return "good";
+  if (hdpPercent >= 60) return "warning";
+  return "danger";
 }
 
 export function buildDailyMetrics(
@@ -95,16 +97,26 @@ export function calculateAverages(metrics: DailyMetrics[]): {
     return { averageFCR: 0, averageHDP: 0 };
   }
 
-  const validFCRs = metrics.filter(m => m.fcr > 0);
-  const validHDPs = metrics.filter(m => m.hdpPercent > 0);
+  const validFCRs = metrics.filter((m) => m.fcr > 0);
+  const validHDPs = metrics.filter((m) => m.hdpPercent > 0);
 
-  const averageFCR = validFCRs.length > 0
-    ? Number((validFCRs.reduce((sum, m) => sum + m.fcr, 0) / validFCRs.length).toFixed(2))
-    : 0;
+  const averageFCR =
+    validFCRs.length > 0
+      ? Number(
+          (validFCRs.reduce((sum, m) => sum + m.fcr, 0) / validFCRs.length).toFixed(
+            2
+          )
+        )
+      : 0;
 
-  const averageHDP = validHDPs.length > 0
-    ? Number((validHDPs.reduce((sum, m) => sum + m.hdpPercent, 0) / validHDPs.length).toFixed(2))
-    : 0;
+  const averageHDP =
+    validHDPs.length > 0
+      ? Number(
+          (validHDPs.reduce((sum, m) => sum + m.hdpPercent, 0) / validHDPs.length).toFixed(
+            2
+          )
+        )
+      : 0;
 
   return { averageFCR, averageHDP };
 }

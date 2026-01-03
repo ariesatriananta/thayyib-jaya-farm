@@ -1,6 +1,6 @@
-import * as db from '../mock/mockDb';
-import { buildDailyMetrics } from '../mock/calculations';
-import type { Recording, DailyMetrics } from '../mock/types';
+import * as db from '../mock/mockDb.ts';
+import { buildDailyMetrics } from '../mock/calculations.ts';
+import type { Recording, DailyMetrics } from '../mock/types.ts';
 
 export interface CreateRecordingInput {
   kandangId: string;

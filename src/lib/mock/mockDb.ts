@@ -1,5 +1,5 @@
-import { initialKandang, initialRecordings, initialSettings, createNewId } from './mockData';
-import type { Kandang, Recording, Settings } from './types';
+import { initialKandang, initialRecordings, initialSettings, createNewId } from './mockData.ts';
+import type { Kandang, Recording, Settings } from './types.ts';
 
 // In-memory storage
 let kandangStore: Kandang[] = [...initialKandang];
