@@ -12,9 +12,14 @@ interface PerformanceListProps {
 export function PerformanceList({ title, statuses, variant }: PerformanceListProps) {
   const Icon = variant === 'top' ? Trophy : AlertTriangle;
   const iconClass = variant === 'top' ? 'text-success' : 'text-destructive';
+  const easing = variant === 'top'
+    ? 'cubic-bezier(0.16, 1, 0.3, 1)'
+    : 'cubic-bezier(0.12, 0.7, 0.24, 1)';
+  const baseDelay = variant === 'top' ? 70 : 90;
+  const durationBase = variant === 'top' ? 500 : 560;
 
   return (
-    <Card className="h-full">
+    <Card className="h-full animate-slide-up">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <Icon className={`w-5 h-5 ${iconClass}`} />
@@ -23,14 +28,27 @@ export function PerformanceList({ title, statuses, variant }: PerformanceListPro
       </CardHeader>
       <CardContent className="space-y-3">
         {statuses.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
+          <p
+            className="text-sm text-muted-foreground text-center py-4 animate-slide-up"
+            style={{
+              animationDuration: `${durationBase}ms`,
+              animationTimingFunction: easing,
+              animationFillMode: "both",
+            }}
+          >
             Tidak ada data
           </p>
         ) : (
           statuses.map((status, index) => (
             <div 
               key={status.kandang.id}
-              className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+              className="flex items-center justify-between p-3 rounded-lg bg-muted/50 animate-slide-up"
+              style={{
+                animationDelay: `${index * baseDelay}ms`,
+                animationDuration: `${durationBase + index * 30}ms`,
+                animationTimingFunction: easing,
+                animationFillMode: "both",
+              }}
             >
               <div className="flex items-center gap-3">
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-accent text-xs font-semibold">

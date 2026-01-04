@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useMemo, useState } from 'react';
 import { LucideIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -5,6 +8,14 @@ import { cn } from '@/lib/utils';
 interface StatCardProps {
   title: string;
   value: string | number;
+  animatedNumber?: number;
+  animationDurationMs?: number;
+  valuePrefix?: string;
+  valueSuffix?: string;
+  valueFormatter?: (value: number) => string;
+  revealDelayMs?: number;
+  revealDurationMs?: number;
+  revealEasing?: string;
   subtitle?: string;
   icon: LucideIcon;
   trend?: {
@@ -22,14 +33,68 @@ const variantStyles = {
   danger: 'bg-destructive/10 text-destructive',
 };
 
-export function StatCard({ title, value, subtitle, icon: Icon, trend, variant = 'default' }: StatCardProps) {
+const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+
+export function StatCard({
+  title,
+  value,
+  animatedNumber,
+  animationDurationMs = 1200,
+  valuePrefix = '',
+  valueSuffix = '',
+  valueFormatter,
+  revealDelayMs,
+  revealDurationMs,
+  revealEasing,
+  subtitle,
+  icon: Icon,
+  trend,
+  variant = 'default',
+}: StatCardProps) {
+  const [animatedValue, setAnimatedValue] = useState(animatedNumber ?? 0);
+
+  useEffect(() => {
+    if (animatedNumber === undefined) return;
+    let frame = 0;
+    const start = performance.now();
+    const duration = Math.max(0, animationDurationMs);
+
+    const tick = (now: number) => {
+      const progress = duration === 0 ? 1 : Math.min(1, (now - start) / duration);
+      const eased = easeOutCubic(progress);
+      setAnimatedValue(animatedNumber * eased);
+      if (progress < 1) {
+        frame = requestAnimationFrame(tick);
+      }
+    };
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [animatedNumber, animationDurationMs]);
+
+  const displayValue = useMemo(() => {
+    if (animatedNumber === undefined) return value;
+    const formatted = valueFormatter
+      ? valueFormatter(animatedValue)
+      : animatedValue.toLocaleString('id-ID');
+    return `${valuePrefix}${formatted}${valueSuffix}`;
+  }, [animatedNumber, animatedValue, value, valueFormatter, valuePrefix, valueSuffix]);
+
   return (
-    <Card className="hover-lift border-border/50 overflow-hidden">
+    <Card
+      className={cn("hover-lift border-border/50 overflow-hidden", revealDelayMs !== undefined && "animate-slide-up")}
+      style={revealDelayMs !== undefined ? {
+        animationDelay: `${revealDelayMs}ms`,
+        animationDuration: revealDurationMs ? `${revealDurationMs}ms` : undefined,
+        animationTimingFunction: revealEasing,
+        animationFillMode: "both",
+      } : undefined}
+    >
       <CardContent className="p-5">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold mt-1 text-foreground">{value}</p>
+            <p className="text-2xl font-bold mt-1 text-foreground">{displayValue}</p>
             {subtitle && (
               <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
             )}

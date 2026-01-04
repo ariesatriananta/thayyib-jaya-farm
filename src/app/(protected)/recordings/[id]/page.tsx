@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { AppLayout } from '@/components/layout/AppLayout';
+import Loading from './loading';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import type { Kandang, Recording } from '@/lib/mock/types';
+import { signalNavigationDone } from '@/lib/ui/navigationProgress';
 
 const RecordingEdit = () => {
   const params = useParams<{ id: string }>();
@@ -31,6 +33,9 @@ const RecordingEdit = () => {
   const { toast } = useToast();
   const [kandangList, setKandangList] = useState<Kandang[]>([]);
   const [recording, setRecording] = useState<Recording | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [kandangLoaded, setKandangLoaded] = useState(false);
+  const [recordingLoaded, setRecordingLoaded] = useState(false);
 
   const [formData, setFormData] = useState({
     kandangId: '',
@@ -55,6 +60,9 @@ const RecordingEdit = () => {
       })
       .catch(() => {
         // Keep empty list on error.
+      })
+      .finally(() => {
+        if (isMounted) setKandangLoaded(true);
       });
     return () => {
       isMounted = false;
@@ -86,6 +94,9 @@ const RecordingEdit = () => {
       })
       .catch(() => {
         if (isMounted) setNotFound(true);
+      })
+      .finally(() => {
+        if (isMounted) setRecordingLoaded(true);
       });
 
     return () => {
@@ -157,6 +168,17 @@ const RecordingEdit = () => {
   };
 
   const feedUsed = Math.max(0, (parseFloat(formData.feedInKg) || 0) - (parseFloat(formData.feedRemainingKg) || 0));
+
+  useEffect(() => {
+    if (!kandangLoaded || !recordingLoaded) return;
+    if (!isLoading) return;
+    setIsLoading(false);
+    signalNavigationDone();
+  }, [isLoading, kandangLoaded, recordingLoaded]);
+
+  if (isLoading) {
+    return <Loading />;
+  }
 
   if (notFound) {
     return (

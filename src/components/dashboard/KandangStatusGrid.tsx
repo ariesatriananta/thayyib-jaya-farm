@@ -11,7 +11,14 @@ interface KandangStatusGridProps {
 export function KandangStatusGrid({ statuses }: KandangStatusGridProps) {
   if (statuses.length === 0) {
     return (
-      <Card>
+      <Card
+        className="animate-slide-up"
+        style={{
+          animationDuration: "520ms",
+          animationTimingFunction: "cubic-bezier(0.22, 0.85, 0.32, 1)",
+          animationFillMode: "both",
+        }}
+      >
         <CardContent className="py-8 text-center text-muted-foreground">
           Tidak ada kandang aktif
         </CardContent>
@@ -21,9 +28,17 @@ export function KandangStatusGrid({ statuses }: KandangStatusGridProps) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {statuses.map((status) => (
+      {statuses.map((status, index) => (
         <Link href={`/recordings?kandang=${status.kandang.id}`} key={status.kandang.id}>
-          <Card className="hover-lift cursor-pointer transition-all duration-300 hover:border-primary/30">
+          <Card
+            className="hover-lift cursor-pointer transition-all duration-300 hover:border-primary/30 animate-slide-up"
+            style={{
+              animationDelay: `${index * 70}ms`,
+              animationDuration: `${520 + index * 20}ms`,
+              animationTimingFunction: "cubic-bezier(0.22, 0.85, 0.32, 1)",
+              animationFillMode: "both",
+            }}
+          >
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { format, subDays } from 'date-fns';
 import { AppLayout } from '@/components/layout/AppLayout';
+import Loading from './loading';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +31,7 @@ import { reportService } from '@/lib/services/reportService';
 import { getHDPStatus } from '@/lib/mock/calculations';
 import { BarChart3, TrendingUp, Trophy, Filter } from 'lucide-react';
 import type { DailyMetrics, Kandang, RankingEntry } from '@/lib/mock/types';
+import { signalNavigationDone } from '@/lib/ui/navigationProgress';
 import {
   LineChart,
   Line,
@@ -44,6 +46,7 @@ import {
 } from 'recharts';
 
 const Reports = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState({
     startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
     endDate: format(new Date(), 'yyyy-MM-dd'),
@@ -54,6 +57,9 @@ const Reports = () => {
   const [dailyMetrics, setDailyMetrics] = useState<DailyMetrics[]>([]);
   const [trendData, setTrendData] = useState<{ date: string; eggsKg: number; feedUsedKg: number; hdpPercent: number }[]>([]);
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
+  const [kandangLoaded, setKandangLoaded] = useState(false);
+  const [reportLoaded, setReportLoaded] = useState(false);
+  const initialLoadRef = useRef(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -63,6 +69,9 @@ const Reports = () => {
       })
       .catch(() => {
         // Keep empty list on error.
+      })
+      .finally(() => {
+        if (isMounted) setKandangLoaded(true);
       });
     return () => {
       isMounted = false;
@@ -71,6 +80,7 @@ const Reports = () => {
 
   useEffect(() => {
     let isMounted = true;
+    const isInitialLoad = initialLoadRef.current;
     reportService.getReportData(filters)
       .then((data) => {
         if (!isMounted) return;
@@ -83,11 +93,27 @@ const Reports = () => {
         setDailyMetrics([]);
         setTrendData([]);
         setRanking([]);
+      })
+      .finally(() => {
+        if (!isMounted || !isInitialLoad) return;
+        setReportLoaded(true);
       });
     return () => {
       isMounted = false;
     };
   }, [filters]);
+
+  useEffect(() => {
+    if (!kandangLoaded || !reportLoaded) return;
+    if (!isLoading) return;
+    initialLoadRef.current = false;
+    setIsLoading(false);
+    signalNavigationDone();
+  }, [isLoading, kandangLoaded, reportLoaded]);
+
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <AppLayout title="Laporan & Analisis" subtitle="Analisis performa kandang">

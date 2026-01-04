@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
+import Loading from './loading';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,21 +10,12 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { settingsService } from '@/lib/services/settingsService';
 import { useToast } from '@/hooks/use-toast';
-import { Settings as SettingsIcon, RotateCcw, Save } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+import { Settings as SettingsIcon, Save } from 'lucide-react';
+import { signalNavigationDone } from '@/lib/ui/navigationProgress';
 
 const Settings = () => {
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
   const [settings, setSettings] = useState({
     defaultTargetHDPPercent: 90,
     defaultTargetFCR: 2.2,
@@ -39,6 +31,11 @@ const Settings = () => {
       })
       .catch(() => {
         // Keep defaults on error.
+      })
+      .finally(() => {
+        if (!isMounted) return;
+        setIsLoading(false);
+        signalNavigationDone();
       });
     return () => {
       isMounted = false;
@@ -65,17 +62,9 @@ const Settings = () => {
     }
   };
 
-  const handleResetData = async () => {
-    await settingsService.resetData();
-    const updated = await settingsService.get();
-    setSettings(updated);
-    toast({
-      title: 'Berhasil',
-      description: 'Semua data berhasil direset ke kondisi awal.',
-    });
-    // Reload page to reflect changes
-    window.location.reload();
-  };
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <AppLayout title="Pengaturan" subtitle="Kelola pengaturan aplikasi">
@@ -149,81 +138,6 @@ const Settings = () => {
           </CardContent>
         </Card>
 
-        {/* Reset Data */}
-        <Card className="border-destructive/30">
-          <CardHeader>
-            <CardTitle className="text-destructive flex items-center gap-2">
-              <RotateCcw className="w-5 h-5" />
-              Reset Data
-            </CardTitle>
-            <CardDescription>
-              Kembalikan semua data ke kondisi awal (mock data)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Tindakan ini akan menghapus semua perubahan yang Anda buat dan mengembalikan data demo.
-                </p>
-              </div>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="gap-2">
-                    <RotateCcw className="w-4 h-4" />
-                    Reset
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Reset Semua Data?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Semua kandang dan pencatatan akan dikembalikan ke data demo awal. Perubahan yang telah Anda buat akan hilang.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Batal</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleResetData}>
-                      Ya, Reset Data
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* About */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Tentang Aplikasi</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground">Versi</p>
-                <p className="font-medium">1.0.0</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Framework</p>
-                <p className="font-medium">Next.js (App Router)</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">UI Library</p>
-                <p className="font-medium">shadcn/ui + Tailwind</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Database</p>
-                <p className="font-medium">Neon (Postgres)</p>
-              </div>
-            </div>
-            <Separator />
-            <p className="text-sm text-muted-foreground">
-              Data aplikasi disimpan di Neon melalui Drizzle ORM. Pengaturan ini mempengaruhi default 
-              saat membuat kandang baru.
-            </p>
-          </CardContent>
-        </Card>
       </div>
     </AppLayout>
   );

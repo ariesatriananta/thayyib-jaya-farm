@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Egg } from 'lucide-react';
 
 const LoginClient = () => {
   const router = useRouter();
@@ -43,8 +42,12 @@ const LoginClient = () => {
       <div className="w-full max-w-md space-y-6 animate-fade-in">
         {/* Logo */}
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary text-primary-foreground mb-4">
-            <Egg className="w-8 h-8" />
+          <div className="inline-flex items-center justify-center w-48 h-48 rounded-3xl mb-4 overflow-hidden bg-background/60 ring-1 ring-border/40 shadow-sm">
+            <img
+              src="/logo-1.png"
+              alt="Logo Thayyib Jaya Farm"
+              className="w-36 h-36 object-contain drop-shadow-sm"
+            />
           </div>
           <h1 className="text-2xl font-bold text-foreground">Thayyib Jaya Farm</h1>
           <p className="text-muted-foreground">Sistem Pencatatan Layer Farm</p>
@@ -82,19 +85,16 @@ const LoginClient = () => {
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? 'Memproses...' : 'Masuk'}
-              </Button>
-              {errorMessage && (
-                <p className="text-sm text-destructive text-center">{errorMessage}</p>
-              )}
+              <div className="pt-4">
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? 'Memproses...' : 'Masuk'}
+                </Button>
+                {errorMessage && (
+                  <p className="text-sm text-destructive text-center mt-3">{errorMessage}</p>
+                )}
+              </div>
             </form>
 
-            <div className="mt-6 pt-6 border-t text-center">
-              <p className="text-sm text-muted-foreground">
-                Gunakan akun yang tersedia. Jika belum punya akses, hubungi admin.
-              </p>
-            </div>
           </CardContent>
         </Card>
 

@@ -4,23 +4,28 @@ import { getToken } from "next-auth/jwt";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const callbackPath = `${request.nextUrl.pathname}${request.nextUrl.search}`;
 
   if (pathname === "/login") {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
     if (token) {
       return NextResponse.redirect(new URL("/", request.url));
     }
-    return NextResponse.next();
+    const response = NextResponse.next();
+    response.headers.set("x-callback-url", callbackPath);
+    return response;
   }
 
   const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
   if (!token) {
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
+    loginUrl.searchParams.set("callbackUrl", callbackPath);
     return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  response.headers.set("x-callback-url", callbackPath);
+  return response;
 }
 
 export const config = {

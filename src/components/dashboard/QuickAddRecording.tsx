@@ -30,6 +30,12 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
   const [kandangList, setKandangList] = useState<Kandang[]>([]);
   
   const today = format(new Date(), 'yyyy-MM-dd');
+  const fieldAnimation = (index: number) => ({
+    animationDelay: `${index * 60}ms`,
+    animationDuration: "520ms",
+    animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+    animationFillMode: "both",
+  });
 
   const [formData, setFormData] = useState({
     kandangId: '',
@@ -124,7 +130,14 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
   }
 
   return (
-    <Card className="border-primary/20">
+    <Card
+      className="border-primary/20 animate-slide-up"
+      style={{
+        animationDuration: "700ms",
+        animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+        animationFillMode: "both",
+      }}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">Pencatatan Cepat - {format(new Date(), 'dd MMM yyyy')}</CardTitle>
@@ -136,7 +149,7 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-2">
+            <div className="space-y-2 animate-slide-up" style={fieldAnimation(0)}>
               <Label>Kandang *</Label>
               <Select
                 value={formData.kandangId}
@@ -153,7 +166,7 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 animate-slide-up" style={fieldAnimation(1)}>
               <Label>Pakan Masuk (kg) *</Label>
               <Input
                 type="number"
@@ -165,7 +178,7 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 animate-slide-up" style={fieldAnimation(2)}>
               <Label>Sisa Pakan (kg)</Label>
               <Input
                 type="number"
@@ -177,7 +190,7 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 animate-slide-up" style={fieldAnimation(3)}>
               <Label>Telur (kg) *</Label>
               <Input
                 type="number"
@@ -189,7 +202,7 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 animate-slide-up" style={fieldAnimation(4)}>
               <Label>Telur (butir) *</Label>
               <Input
                 type="number"
@@ -200,7 +213,7 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 animate-slide-up" style={fieldAnimation(5)}>
               <Label>Ayam Mati</Label>
               <Input
                 type="number"
@@ -211,7 +224,7 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
               />
             </div>
 
-            <div className="space-y-2 sm:col-span-2">
+            <div className="space-y-2 sm:col-span-2 animate-slide-up" style={fieldAnimation(6)}>
               <Label>Keterangan</Label>
               <Input
                 value={formData.notes}
@@ -221,7 +234,7 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
             </div>
           </div>
 
-          <div className="flex gap-2 justify-end">
+          <div className="flex gap-2 justify-end animate-slide-up" style={fieldAnimation(7)}>
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
               Batal
             </Button>

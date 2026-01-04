@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { AppLayout } from '@/components/layout/AppLayout';
+import Loading from './loading';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,11 +24,13 @@ import { recordingService } from '@/lib/services/recordingService';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import type { Kandang } from '@/lib/mock/types';
+import { signalNavigationDone } from '@/lib/ui/navigationProgress';
 
 const RecordingNew = () => {
   const router = useRouter();
   const { toast } = useToast();
   const [kandangList, setKandangList] = useState<Kandang[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     kandangId: '',
@@ -53,6 +56,11 @@ const RecordingNew = () => {
       })
       .catch(() => {
         // Keep empty list on error.
+      })
+      .finally(() => {
+        if (!isMounted) return;
+        setIsLoading(false);
+        signalNavigationDone();
       });
     return () => {
       isMounted = false;
@@ -153,6 +161,10 @@ const RecordingNew = () => {
   };
 
   const feedUsed = Math.max(0, (parseFloat(formData.feedInKg) || 0) - (parseFloat(formData.feedRemainingKg) || 0));
+
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <AppLayout title="Tambah Pencatatan" subtitle="Tambah data pencatatan harian baru">

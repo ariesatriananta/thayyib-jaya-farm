@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
+import Loading from './loading';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,9 +49,11 @@ import { kandangService } from '@/lib/services/kandangService';
 import { settingsService } from '@/lib/services/settingsService';
 import { useToast } from '@/hooks/use-toast';
 import type { Kandang } from '@/lib/mock/types';
+import { signalNavigationDone } from '@/lib/ui/navigationProgress';
 
 const KandangPage = () => {
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
   const [settings, setSettings] = useState({
     defaultTargetHDPPercent: 90,
     defaultTargetFCR: 2.2,
@@ -69,6 +72,12 @@ const KandangPage = () => {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const fieldAnimation = (index: number) => ({
+    animationDelay: `${index * 70}ms`,
+    animationDuration: "520ms",
+    animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+    animationFillMode: "both",
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -86,6 +95,11 @@ const KandangPage = () => {
       })
       .catch(() => {
         // Keep defaults on error.
+      })
+      .finally(() => {
+        if (!isMounted) return;
+        setIsLoading(false);
+        signalNavigationDone();
       });
 
     return () => {
@@ -194,6 +208,10 @@ const KandangPage = () => {
     toast({ title: 'Berhasil', description: 'Status kandang berhasil diubah.' });
   };
 
+  if (isLoading) {
+    return <Loading />;
+  }
+
   return (
     <AppLayout title="Manajemen Kandang" subtitle="Kelola data kandang peternakan">
       <div className="space-y-6 animate-fade-in">
@@ -218,7 +236,7 @@ const KandangPage = () => {
               </DialogHeader>
               
               <div className="space-y-4 py-4">
-                <div className="space-y-2">
+                <div className="space-y-2 animate-slide-up" style={fieldAnimation(0)}>
                   <Label>Nama Kandang *</Label>
                   <Input
                     value={formData.name}
@@ -229,7 +247,7 @@ const KandangPage = () => {
                   {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 animate-slide-up" style={fieldAnimation(1)}>
                   <Label>Jumlah Ayam Awal *</Label>
                   <Input
                     type="number"
@@ -243,7 +261,7 @@ const KandangPage = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                  <div className="space-y-2 animate-slide-up" style={fieldAnimation(2)}>
                     <Label>Target HDP (%)</Label>
                     <Input
                       type="number"
@@ -257,7 +275,7 @@ const KandangPage = () => {
                     {errors.targetHDPPercent && <p className="text-sm text-destructive">{errors.targetHDPPercent}</p>}
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2 animate-slide-up" style={fieldAnimation(3)}>
                     <Label>Target FCR</Label>
                     <Input
                       type="number"
@@ -271,7 +289,7 @@ const KandangPage = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 animate-slide-up" style={fieldAnimation(4)}>
                   <Label>Status</Label>
                   <Select
                     value={formData.status}
@@ -290,7 +308,7 @@ const KandangPage = () => {
                 </div>
               </div>
 
-              <DialogFooter>
+              <DialogFooter className="animate-slide-up" style={fieldAnimation(5)}>
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Batal
                 </Button>

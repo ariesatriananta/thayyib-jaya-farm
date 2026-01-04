@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { format, subDays } from 'date-fns';
 import { AppLayout } from '@/components/layout/AppLayout';
+import Loading from './loading';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,6 +33,7 @@ import { recordingService } from '@/lib/services/recordingService';
 import { getHDPStatus } from '@/lib/mock/calculations';
 import { useToast } from '@/hooks/use-toast';
 import type { DailyMetrics, Kandang } from '@/lib/mock/types';
+import { signalNavigationDone } from '@/lib/ui/navigationProgress';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,6 +59,10 @@ const RecordingsClient = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [kandangList, setKandangList] = useState<Kandang[]>([]);
   const [metrics, setMetrics] = useState<DailyMetrics[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [kandangLoaded, setKandangLoaded] = useState(false);
+  const [metricsLoaded, setMetricsLoaded] = useState(false);
+  const initialLoadRef = useRef(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -66,6 +72,9 @@ const RecordingsClient = () => {
       })
       .catch(() => {
         // Keep empty list on error.
+      })
+      .finally(() => {
+        if (isMounted) setKandangLoaded(true);
       });
     return () => {
       isMounted = false;
@@ -74,6 +83,7 @@ const RecordingsClient = () => {
 
   useEffect(() => {
     let isMounted = true;
+    const isInitialLoad = initialLoadRef.current;
     recordingService.getMetricsByDateRange(
       filters.startDate,
       filters.endDate,
@@ -84,11 +94,23 @@ const RecordingsClient = () => {
       })
       .catch(() => {
         if (isMounted) setMetrics([]);
+      })
+      .finally(() => {
+        if (!isMounted || !isInitialLoad) return;
+        setMetricsLoaded(true);
       });
     return () => {
       isMounted = false;
     };
   }, [filters.startDate, filters.endDate, filters.kandangId, refreshKey]);
+
+  useEffect(() => {
+    if (!kandangLoaded || !metricsLoaded) return;
+    if (!isLoading) return;
+    initialLoadRef.current = false;
+    setIsLoading(false);
+    signalNavigationDone();
+  }, [isLoading, kandangLoaded, metricsLoaded]);
 
   const handleDelete = async (id: string) => {
     const result = await recordingService.delete(id);
@@ -106,6 +128,10 @@ const RecordingsClient = () => {
       });
     }
   };
+
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <AppLayout title="Pencatatan Harian" subtitle="Kelola data pencatatan harian kandang">

@@ -1,11 +1,12 @@
 "use client";
 
-import { Bell, LogOut } from 'lucide-react';
+import { Moon, Sun, LogOut } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { settingsService } from '@/lib/services/settingsService';
 import type { Settings } from '@/lib/mock/types';
 import { signOut } from 'next-auth/react';
+import { useTheme } from 'next-themes';
 
 interface HeaderProps {
   title: string;
@@ -13,11 +14,17 @@ interface HeaderProps {
 }
 
 export function Header({ title, subtitle }: HeaderProps) {
+  const { theme, setTheme } = useTheme();
+  const [isMounted, setIsMounted] = useState(false);
   const [settings, setSettings] = useState<Settings>({
     defaultTargetHDPPercent: 90,
     defaultTargetFCR: 2.2,
     farmName: 'Thayyib Jaya Farm',
   });
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -33,6 +40,16 @@ export function Header({ title, subtitle }: HeaderProps) {
     };
   }, []);
 
+  const handleToggleTheme = () => {
+    if (typeof document !== 'undefined') {
+      const root = document.documentElement;
+      root.classList.add('theme-transition');
+      window.setTimeout(() => root.classList.remove('theme-transition'), 220);
+    }
+
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
   return (
     <header className="gradient-header border-b border-border px-6 py-4 lg:px-8">
       <div className="flex items-center justify-between">
@@ -44,9 +61,18 @@ export function Header({ title, subtitle }: HeaderProps) {
         </div>
         
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Toggle tema"
+            onClick={handleToggleTheme}
+            className="theme-toggle-btn"
+          >
+            {isMounted && theme === 'dark' ? (
+              <Sun className="h-5 w-5 theme-toggle-icon theme-toggle-icon--sun" />
+            ) : (
+              <Moon className="h-5 w-5 theme-toggle-icon theme-toggle-icon--moon" />
+            )}
           </Button>
           
           <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-border">

@@ -8,13 +8,14 @@ import {
   Home, 
   BarChart3, 
   Settings,
-  Egg,
   Menu,
-  X
+  X,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { onNavigationDone } from '@/lib/ui/navigationProgress';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -27,6 +28,7 @@ const navigation = [
 export function Sidebar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
 
   const isActive = (href: string) => {
     if (href === '/') {
@@ -34,6 +36,10 @@ export function Sidebar() {
     }
     return pathname.startsWith(href);
   };
+
+  useEffect(() => {
+    return onNavigationDone(() => setPendingHref(null));
+  }, []);
 
   return (
     <>
@@ -65,8 +71,12 @@ export function Sidebar() {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center gap-3 px-6 py-5 border-b border-sidebar-border">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-primary-foreground">
-              <Egg className="w-5 h-5" />
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl overflow-hidden bg-background/70 ring-1 ring-border/40 shadow-sm">
+              <img
+                src="/logo-1.png"
+                alt="Logo Thayyib Jaya Farm"
+                className="w-8 h-8 object-contain drop-shadow-sm"
+              />
             </div>
             <div>
               <h1 className="font-bold text-lg text-sidebar-foreground">Thayyib Jaya</h1>
@@ -80,7 +90,10 @@ export function Sidebar() {
               <Link
                 key={item.name}
                 href={item.href}
-                onClick={() => setIsOpen(false)}
+                onClick={() => {
+                  setIsOpen(false);
+                  setPendingHref(item.href);
+                }}
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
                   isActive(item.href)
@@ -89,7 +102,10 @@ export function Sidebar() {
                 )}
               >
                 <item.icon className="w-5 h-5" />
-                {item.name}
+                <span className="flex-1">{item.name}</span>
+                {pendingHref === item.href && (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+                )}
               </Link>
             ))}
           </nav>
