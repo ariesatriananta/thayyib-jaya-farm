@@ -40,7 +40,6 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const now = new Date().toISOString();
   const feedUsedKg = Math.max(0, body.feedInKg - body.feedRemainingKg);
 
   const [created] = await db.insert(recordings).values({
@@ -54,8 +53,6 @@ export async function POST(request: Request) {
     eggsCount: body.eggsCount,
     deadChickenCount: body.deadChickenCount,
     notes: body.notes || "",
-    createdAt: now,
-    updatedAt: now,
   }).returning();
 
   return NextResponse.json(mapRecording(created));

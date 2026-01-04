@@ -9,14 +9,11 @@ export async function POST() {
   await db.delete(kandang);
   await db.delete(settings);
 
-  const now = new Date().toISOString();
   await db.insert(settings).values({
     id: SETTINGS_ID,
     farmName: initialSettings.farmName,
     defaultTargetHDPPercent: initialSettings.defaultTargetHDPPercent,
     defaultTargetFCR: initialSettings.defaultTargetFCR,
-    createdAt: now,
-    updatedAt: now,
   });
 
   await db.insert(kandang).values(

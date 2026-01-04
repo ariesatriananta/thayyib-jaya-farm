@@ -9,14 +9,11 @@ import { eq } from "drizzle-orm";
 export async function GET() {
   const rows = await db.select().from(settings).limit(1);
   if (rows.length === 0) {
-    const now = new Date().toISOString();
     const [created] = await db.insert(settings).values({
       id: SETTINGS_ID,
       farmName: initialSettings.farmName,
       defaultTargetHDPPercent: initialSettings.defaultTargetHDPPercent,
       defaultTargetFCR: initialSettings.defaultTargetFCR,
-      createdAt: now,
-      updatedAt: now,
     }).returning();
     return NextResponse.json(mapSettings(created));
   }
@@ -26,7 +23,6 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   const body = await request.json();
-  const now = new Date().toISOString();
   const existing = await db.select().from(settings).limit(1);
   if (existing.length > 0) {
     const [updated] = await db
@@ -46,8 +42,6 @@ export async function PUT(request: Request) {
     farmName: body.farmName,
     defaultTargetHDPPercent: body.defaultTargetHDPPercent,
     defaultTargetFCR: body.defaultTargetFCR,
-    createdAt: now,
-    updatedAt: now,
   }).returning();
 
   return NextResponse.json(mapSettings(created));

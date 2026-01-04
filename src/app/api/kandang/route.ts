@@ -12,7 +12,6 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const now = new Date().toISOString();
 
   const [created] = await db.insert(kandang).values({
     id: randomUUID(),
@@ -21,8 +20,6 @@ export async function POST(request: Request) {
     targetHDPPercent: body.targetHDPPercent,
     targetFCR: body.targetFCR,
     status: body.status,
-    createdAt: now,
-    updatedAt: now,
   }).returning();
 
   return NextResponse.json(mapKandang(created));
