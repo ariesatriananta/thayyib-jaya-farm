@@ -25,11 +25,14 @@ export const authOptions: NextAuthOptions = {
         const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
         if (!isValid) return null;
 
+        const role = user.role === "admin" || user.role === "staff" ? user.role : null;
+        if (!role) return null;
+
         return {
           id: user.id,
           name: user.name,
           username: user.username,
-          role: user.role,
+          role,
         };
       },
     }),
