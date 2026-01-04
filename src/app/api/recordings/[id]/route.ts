@@ -18,7 +18,6 @@ export async function GET(_: Request, { params }: RouteParams) {
 
 export async function PUT(request: Request, { params }: RouteParams) {
   const body = await request.json();
-  const now = new Date().toISOString();
   const existingRows = await db.select().from(recordings).where(eq(recordings.id, params.id)).limit(1);
   if (existingRows.length === 0) {
     return NextResponse.json(null);
@@ -36,7 +35,6 @@ export async function PUT(request: Request, { params }: RouteParams) {
       feedInKg,
       feedRemainingKg,
       feedUsedKg,
-      updatedAt: now,
     })
     .where(eq(recordings.id, params.id))
     .returning();

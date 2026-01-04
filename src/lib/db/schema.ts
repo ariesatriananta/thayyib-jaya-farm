@@ -7,7 +7,10 @@ export const users = pgTable("users", {
   role: text("role").notNull(),
   passwordHash: text("password_hash").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date().toISOString()),
 });
 
 export const kandang = pgTable("kandang", {
@@ -18,7 +21,10 @@ export const kandang = pgTable("kandang", {
   targetFCR: real("target_fcr").notNull(),
   status: text("status").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date().toISOString()),
 });
 
 export const recordings = pgTable("recordings", {
@@ -33,7 +39,10 @@ export const recordings = pgTable("recordings", {
   deadChickenCount: integer("dead_chicken_count").notNull(),
   notes: text("notes").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date().toISOString()),
 });
 
 export const settings = pgTable("settings", {
@@ -42,5 +51,8 @@ export const settings = pgTable("settings", {
   defaultTargetHDPPercent: real("default_target_hdp_percent").notNull(),
   defaultTargetFCR: real("default_target_fcr").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date().toISOString()),
 });

@@ -19,7 +19,7 @@ export async function POST(_: Request, { params }: RouteParams) {
 
   const [updated] = await db
     .update(kandang)
-    .set({ status: nextStatus, updatedAt: now })
+    .set({ status: nextStatus })
     .where(eq(kandang.id, params.id))
     .returning();
 

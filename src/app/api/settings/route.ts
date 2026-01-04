@@ -35,7 +35,6 @@ export async function PUT(request: Request) {
         farmName: body.farmName,
         defaultTargetHDPPercent: body.defaultTargetHDPPercent,
         defaultTargetFCR: body.defaultTargetFCR,
-        updatedAt: now,
       })
       .where(eq(settings.id, existing[0].id))
       .returning();

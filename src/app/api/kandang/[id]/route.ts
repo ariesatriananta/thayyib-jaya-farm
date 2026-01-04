@@ -18,13 +18,11 @@ export async function GET(_: Request, { params }: RouteParams) {
 
 export async function PUT(request: Request, { params }: RouteParams) {
   const body = await request.json();
-  const now = new Date().toISOString();
 
   const [updated] = await db
     .update(kandang)
     .set({
       ...body,
-      updatedAt: now,
     })
     .where(eq(kandang.id, params.id))
     .returning();
