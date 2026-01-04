@@ -1,7 +1,11 @@
+"use client";
+
 import { Bell, LogOut } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { settingsService } from '@/lib/services/settingsService';
+import type { Settings } from '@/lib/mock/types';
+import { signOut } from 'next-auth/react';
 
 interface HeaderProps {
   title: string;
@@ -9,7 +13,25 @@ interface HeaderProps {
 }
 
 export function Header({ title, subtitle }: HeaderProps) {
-  const settings = settingsService.get();
+  const [settings, setSettings] = useState<Settings>({
+    defaultTargetHDPPercent: 90,
+    defaultTargetFCR: 2.2,
+    farmName: 'Thayyib Jaya Farm',
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+
+    settingsService.get().then((data) => {
+      if (isMounted) setSettings(data);
+    }).catch(() => {
+      // Keep fallback settings on failure.
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <header className="gradient-header border-b border-border px-6 py-4 lg:px-8">
@@ -32,11 +54,13 @@ export function Header({ title, subtitle }: HeaderProps) {
               <p className="text-sm font-medium">Admin</p>
               <p className="text-xs text-muted-foreground">{settings.farmName}</p>
             </div>
-            <Link to="/login">
-              <Button variant="ghost" size="icon">
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => signOut({ callbackUrl: '/login' })}
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
           </div>
         </div>
       </div>

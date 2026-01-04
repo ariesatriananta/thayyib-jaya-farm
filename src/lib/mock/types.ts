@@ -26,6 +26,7 @@ export interface Recording {
 
 export interface DailyMetrics {
   date: string;
+  recordingId?: string;
   kandangId: string;
   kandangName: string;
   totalChickenToday: number;

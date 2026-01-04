@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+"use client";
+
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,13 +24,12 @@ interface QuickAddRecordingProps {
 }
 
 export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [kandangList, setKandangList] = useState<Kandang[]>([]);
   
   const today = format(new Date(), 'yyyy-MM-dd');
-  const kandangList = kandangService.getActive();
 
   const [formData, setFormData] = useState({
     kandangId: '',
@@ -41,13 +41,30 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
     notes: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    let isMounted = true;
+
+    kandangService.getActive()
+      .then((data) => {
+        if (isMounted) setKandangList(data);
+      })
+      .catch(() => {
+        // Keep empty list on error.
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
       // Check if recording already exists
-      if (recordingService.existsForDateAndKandang(today, formData.kandangId)) {
+      const exists = await recordingService.existsForDateAndKandang(today, formData.kandangId);
+      if (exists) {
         toast({
           title: 'Peringatan',
           description: 'Data untuk tanggal dan kandang ini sudah ada. Silakan edit data yang ada.',
@@ -57,7 +74,7 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
         return;
       }
 
-      recordingService.create({
+      await recordingService.create({
         kandangId: formData.kandangId,
         date: today,
         feedInKg: parseFloat(formData.feedInKg) || 0,

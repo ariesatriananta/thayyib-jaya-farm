@@ -69,6 +69,7 @@ export function buildDailyMetrics(
 
   return {
     date: recording.date,
+    recordingId: recording.id,
     kandangId: recording.kandangId,
     kandangName: kandang.name,
     totalChickenToday,

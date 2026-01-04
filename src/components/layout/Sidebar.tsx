@@ -1,4 +1,7 @@
-import { Link, useLocation } from 'react-router-dom';
+"use client";
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, 
   ClipboardList, 
@@ -22,14 +25,14 @@ const navigation = [
 ];
 
 export function Sidebar() {
-  const location = useLocation();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
   const isActive = (href: string) => {
     if (href === '/') {
-      return location.pathname === '/';
+      return pathname === '/';
     }
-    return location.pathname.startsWith(href);
+    return pathname.startsWith(href);
   };
 
   return (
@@ -76,7 +79,7 @@ export function Sidebar() {
             {navigation.map((item) => (
               <Link
                 key={item.name}
-                to={item.href}
+                href={item.href}
                 onClick={() => setIsOpen(false)}
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",

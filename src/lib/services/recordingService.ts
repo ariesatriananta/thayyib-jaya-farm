@@ -1,6 +1,5 @@
-import * as db from '../mock/mockDb';
-import { buildDailyMetrics } from '../mock/calculations';
 import type { Recording, DailyMetrics } from '../mock/types';
+import { fetchJson } from './apiClient';
 
 export interface CreateRecordingInput {
   kandangId: string;
@@ -14,70 +13,57 @@ export interface CreateRecordingInput {
 }
 
 export const recordingService = {
-  getAll(): Recording[] {
-    return db.getAllRecordings();
+  async getAll(): Promise<Recording[]> {
+    return fetchJson<Recording[]>('/api/recordings');
   },
 
-  getById(id: string): Recording | undefined {
-    return db.getRecordingById(id);
+  async getById(id: string): Promise<Recording | null> {
+    return fetchJson<Recording | null>(`/api/recordings/${id}`);
   },
 
-  getByKandang(kandangId: string): Recording[] {
-    return db.getRecordingsByKandang(kandangId);
+  async getByKandang(kandangId: string): Promise<Recording[]> {
+    return fetchJson<Recording[]>(`/api/recordings?kandangId=${encodeURIComponent(kandangId)}`);
   },
 
-  getByDateRange(startDate: string, endDate: string, kandangId?: string): Recording[] {
-    let recordings = db.getRecordingsByDateRange(startDate, endDate);
-    
-    if (kandangId && kandangId !== 'all') {
-      recordings = recordings.filter(r => r.kandangId === kandangId);
-    }
-    
-    return recordings;
+  async getByDateRange(startDate: string, endDate: string, kandangId?: string): Promise<Recording[]> {
+    const params = new URLSearchParams({ startDate, endDate });
+    if (kandangId) params.set('kandangId', kandangId);
+    return fetchJson<Recording[]>(`/api/recordings?${params.toString()}`);
   },
 
-  getByDateAndKandang(date: string, kandangId: string): Recording | undefined {
-    return db.getRecordingByDateAndKandang(date, kandangId);
+  async getByDateAndKandang(date: string, kandangId: string): Promise<Recording | null> {
+    const params = new URLSearchParams({ date, kandangId });
+    return fetchJson<Recording | null>(`/api/recordings?${params.toString()}`);
   },
 
-  existsForDateAndKandang(date: string, kandangId: string): boolean {
-    return !!db.getRecordingByDateAndKandang(date, kandangId);
+  async existsForDateAndKandang(date: string, kandangId: string): Promise<boolean> {
+    const record = await this.getByDateAndKandang(date, kandangId);
+    return !!record;
   },
 
-  create(data: CreateRecordingInput): Recording {
-    return db.createRecording(data);
+  async create(data: CreateRecordingInput): Promise<Recording> {
+    return fetchJson<Recording>('/api/recordings', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   },
 
-  update(id: string, data: Partial<Recording>): Recording | undefined {
-    return db.updateRecording(id, data);
+  async update(id: string, data: Partial<Recording>): Promise<Recording | null> {
+    return fetchJson<Recording | null>(`/api/recordings/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
   },
 
-  delete(id: string): boolean {
-    return db.deleteRecording(id);
+  async delete(id: string): Promise<{ success: boolean }> {
+    return fetchJson<{ success: boolean }>(`/api/recordings/${id}`, {
+      method: 'DELETE',
+    });
   },
 
-  getMetrics(recording: Recording): DailyMetrics | null {
-    const kandang = db.getKandangById(recording.kandangId);
-    if (!kandang) return null;
-
-    const allRecordings = db.getAllRecordings();
-    return buildDailyMetrics(recording, kandang, allRecordings);
-  },
-
-  getMetricsByDateRange(startDate: string, endDate: string, kandangId?: string): DailyMetrics[] {
-    const recordings = this.getByDateRange(startDate, endDate, kandangId);
-    const allRecordings = db.getAllRecordings();
-    const metrics: DailyMetrics[] = [];
-
-    for (const recording of recordings) {
-      const kandang = db.getKandangById(recording.kandangId);
-      if (kandang) {
-        metrics.push(buildDailyMetrics(recording, kandang, allRecordings));
-      }
-    }
-
-    return metrics.sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
+  async getMetricsByDateRange(startDate: string, endDate: string, kandangId?: string): Promise<DailyMetrics[]> {
+    const params = new URLSearchParams({ startDate, endDate });
+    if (kandangId) params.set('kandangId', kandangId);
+    return fetchJson<DailyMetrics[]>(`/api/recordings/metrics?${params.toString()}`);
   },
 };

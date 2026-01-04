@@ -22,3 +22,23 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+
+# env files
+.env*
+.env.example
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts

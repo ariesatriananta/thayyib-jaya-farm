@@ -1,16 +1,21 @@
-import * as db from '../mock/mockDb';
 import type { Settings } from '../mock/types';
+import { fetchJson } from './apiClient';
 
 export const settingsService = {
-  get(): Settings {
-    return db.getSettings();
+  async get(): Promise<Settings> {
+    return fetchJson<Settings>('/api/settings');
   },
 
-  update(data: Partial<Settings>): Settings {
-    return db.updateSettings(data);
+  async update(data: Partial<Settings>): Promise<Settings> {
+    return fetchJson<Settings>('/api/settings', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
   },
 
-  resetData(): void {
-    db.resetData();
+  async resetData(): Promise<{ success: boolean }> {
+    return fetchJson<{ success: boolean }>('/api/settings/reset', {
+      method: 'POST',
+    });
   },
 };

@@ -54,11 +54,13 @@ npm run dev
 
 This project is built with:
 
-- Vite
+- Next.js (App Router)
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
+- Drizzle ORM
+- Neon (Postgres)
 
 ## How can I deploy this project?
 

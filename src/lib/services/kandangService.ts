@@ -1,17 +1,17 @@
-import * as db from '../mock/mockDb';
 import type { Kandang } from '../mock/types';
+import { fetchJson } from './apiClient';
 
 export const kandangService = {
-  getAll(): Kandang[] {
-    return db.getAllKandang();
+  async getAll(): Promise<Kandang[]> {
+    return fetchJson<Kandang[]>('/api/kandang');
   },
 
-  getActive(): Kandang[] {
-    return db.getActiveKandang();
+  async getActive(): Promise<Kandang[]> {
+    return fetchJson<Kandang[]>('/api/kandang/active');
   },
 
-  getById(id: string): Kandang | undefined {
-    return db.getKandangById(id);
+  async getById(id: string): Promise<Kandang | null> {
+    return fetchJson<Kandang | null>(`/api/kandang/${id}`);
   },
 
   create(data: {
@@ -20,24 +20,29 @@ export const kandangService = {
     targetHDPPercent: number;
     targetFCR: number;
     status: 'active' | 'inactive';
-  }): Kandang {
-    return db.createKandang(data);
+  }): Promise<Kandang> {
+    return fetchJson<Kandang>('/api/kandang', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   },
 
-  update(id: string, data: Partial<Kandang>): Kandang | undefined {
-    return db.updateKandang(id, data);
+  update(id: string, data: Partial<Kandang>): Promise<Kandang | null> {
+    return fetchJson<Kandang | null>(`/api/kandang/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
   },
 
-  delete(id: string): boolean {
-    return db.deleteKandang(id);
+  delete(id: string): Promise<{ success: boolean }> {
+    return fetchJson<{ success: boolean }>(`/api/kandang/${id}`, {
+      method: 'DELETE',
+    });
   },
 
-  toggleStatus(id: string): Kandang | undefined {
-    const kandang = db.getKandangById(id);
-    if (!kandang) return undefined;
-    
-    return db.updateKandang(id, {
-      status: kandang.status === 'active' ? 'inactive' : 'active',
+  toggleStatus(id: string): Promise<Kandang | null> {
+    return fetchJson<Kandang | null>(`/api/kandang/${id}/toggle`, {
+      method: 'POST',
     });
   },
 };

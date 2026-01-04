@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import type { KandangStatus } from '@/lib/mock/types';
 import { Home, Egg, TrendingUp } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 
 interface KandangStatusGridProps {
   statuses: KandangStatus[];
@@ -22,7 +22,7 @@ export function KandangStatusGrid({ statuses }: KandangStatusGridProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {statuses.map((status) => (
-        <Link to={`/recordings?kandang=${status.kandang.id}`} key={status.kandang.id}>
+        <Link href={`/recordings?kandang=${status.kandang.id}`} key={status.kandang.id}>
           <Card className="hover-lift cursor-pointer transition-all duration-300 hover:border-primary/30">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
