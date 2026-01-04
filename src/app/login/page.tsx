@@ -16,10 +16,12 @@ const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrorMessage('');
 
     const callbackUrl = searchParams.get('callbackUrl') || '/';
     const result = await signIn('credentials', {
@@ -33,6 +35,7 @@ const Login = () => {
       router.push(callbackUrl);
     } else {
       setIsSubmitting(false);
+      setErrorMessage('Username atau password salah.');
     }
   };
 
@@ -65,7 +68,7 @@ const Login = () => {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="thayyib"
+                  placeholder="Masukkan username"
                 />
               </div>
 
@@ -83,18 +86,15 @@ const Login = () => {
               <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? 'Memproses...' : 'Masuk'}
               </Button>
+              {errorMessage && (
+                <p className="text-sm text-destructive text-center">{errorMessage}</p>
+              )}
             </form>
 
             <div className="mt-6 pt-6 border-t text-center">
-              <p className="text-sm text-muted-foreground mb-3">
-                Gunakan akun yang tersedia. Jika sudah login, Anda akan diarahkan ke dashboard.
+              <p className="text-sm text-muted-foreground">
+                Gunakan akun yang tersedia. Jika belum punya akses, hubungi admin.
               </p>
-              <Link href="/">
-                <Button variant="outline" className="gap-2">
-                  Langsung ke Dashboard
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </Link>
             </div>
           </CardContent>
         </Card>
