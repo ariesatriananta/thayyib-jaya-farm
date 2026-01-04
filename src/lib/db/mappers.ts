@@ -7,13 +7,15 @@ export type RecordingRow = InferSelectModel<typeof recordings>;
 export type SettingsRow = InferSelectModel<typeof settingsTable>;
 
 export function mapKandang(row: KandangRow): Kandang {
+  const status = row.status === "active" || row.status === "inactive" ? row.status : "inactive";
+
   return {
     id: row.id,
     name: row.name,
     initialChickenCount: row.initialChickenCount,
     targetHDPPercent: row.targetHDPPercent,
     targetFCR: row.targetFCR,
-    status: row.status,
+    status,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
