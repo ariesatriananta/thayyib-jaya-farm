@@ -107,16 +107,23 @@ function generateRecordings(): Recording[] {
     'e1b7d5a6-0b5e-4f2e-9b1c-1a2b3c4d5e05',
     'e1b7d5a6-0b5e-4f2e-9b1c-1a2b3c4d5e06',
   ]; // These will have occasional low HDP
+  const highPerformanceKandangIds = [
+    'e1b7d5a6-0b5e-4f2e-9b1c-1a2b3c4d5e01',
+    'e1b7d5a6-0b5e-4f2e-9b1c-1a2b3c4d5e03',
+  ];
 
   initialKandang.forEach((kandang) => {
     if (kandang.status === 'inactive') return;
+    let cumulativeDead = 0;
 
     for (let i = 29; i >= 0; i--) {
       const date = format(subDays(today, i), 'yyyy-MM-dd');
       
       // Determine performance level for this day
       const isLowPerformanceKandang = lowPerformanceKandangIds.includes(kandang.id);
-      const hasLowDay = Math.random() < (isLowPerformanceKandang ? 0.3 : 0.1);
+      const isHighPerformanceKandang = highPerformanceKandangIds.includes(kandang.id);
+      const hasLowDay = Math.random() < (isLowPerformanceKandang ? 0.25 : isHighPerformanceKandang ? 0.08 : 0.15);
+      const liveChicken = Math.max(0, kandang.initialChickenCount - cumulativeDead);
       
       let feedInKg: number;
       let feedRemainingKg: number;
@@ -126,19 +133,28 @@ function generateRecordings(): Recording[] {
       
       if (hasLowDay) {
         // Low performance day
-        feedInKg = randomBetween(100, 140);
-        feedRemainingKg = randomBetween(10, 25);
-        eggsKg = randomFloat(40, 70, 1);
-        eggsCount = randomBetween(600, 1000);
-        deadChickenCount = randomBetween(2, 8);
+        const hdpPercent = isLowPerformanceKandang
+          ? randomFloat(0.45, 0.6, 3)
+          : randomFloat(0.6, 0.72, 3);
+        eggsCount = Math.min(liveChicken, Math.round(liveChicken * hdpPercent));
+        eggsKg = Number((eggsCount * randomFloat(0.058, 0.064, 3)).toFixed(1));
+        const feedUsed = Number((eggsKg * randomFloat(2.2, 2.9, 2)).toFixed(1));
+        feedInKg = Number((feedUsed + randomFloat(4, 12, 1)).toFixed(1));
+        feedRemainingKg = Number((feedInKg - feedUsed).toFixed(1));
+        deadChickenCount = randomBetween(3, isLowPerformanceKandang ? 10 : 6);
       } else {
         // Normal/good performance day
-        feedInKg = randomBetween(90, 130);
-        feedRemainingKg = randomBetween(0, 15);
-        eggsKg = randomFloat(70, 100, 1);
-        eggsCount = randomBetween(1100, 1600);
-        deadChickenCount = randomBetween(0, 3);
+        const hdpPercent = isHighPerformanceKandang
+          ? randomFloat(0.85, 0.95, 3)
+          : randomFloat(0.72, 0.88, 3);
+        eggsCount = Math.min(liveChicken, Math.round(liveChicken * hdpPercent));
+        eggsKg = Number((eggsCount * randomFloat(0.058, 0.065, 3)).toFixed(1));
+        const feedUsed = Number((eggsKg * randomFloat(1.8, 2.5, 2)).toFixed(1));
+        feedInKg = Number((feedUsed + randomFloat(0, 10, 1)).toFixed(1));
+        feedRemainingKg = Number((feedInKg - feedUsed).toFixed(1));
+        deadChickenCount = randomBetween(0, isLowPerformanceKandang ? 4 : 3);
       }
+      cumulativeDead += deadChickenCount;
 
       const recording: Recording = {
         id: generateId(),

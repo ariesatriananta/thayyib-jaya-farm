@@ -23,6 +23,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  if (!pathname.startsWith("/api") && token.role === "staff") {
+    const blockedPaths = ["/kandang", "/settings"];
+    const isBlocked = blockedPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+    if (isBlocked) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+  }
+
   const response = NextResponse.next();
   response.headers.set("x-callback-url", callbackPath);
   return response;

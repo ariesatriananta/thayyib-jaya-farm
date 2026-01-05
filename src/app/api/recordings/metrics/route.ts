@@ -4,9 +4,11 @@ import { kandang as kandangTable, recordings } from "@/lib/db/schema";
 import { mapKandang, mapRecording } from "@/lib/db/mappers";
 import { buildDailyMetrics } from "@/lib/mock/calculations";
 import type { DailyMetrics } from "@/lib/mock/types";
-import { and, desc, eq, gte, lte } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lte } from "drizzle-orm";
+import { getAccessContext } from "@/lib/db/access";
 
 export async function GET(request: Request) {
+  const access = await getAccessContext();
   const { searchParams } = new URL(request.url);
   const startDate = searchParams.get("startDate");
   const endDate = searchParams.get("endDate");
@@ -14,6 +16,15 @@ export async function GET(request: Request) {
 
   if (!startDate || !endDate) {
     return NextResponse.json([]);
+  }
+
+  if (access.role === "staff") {
+    if (!access.kandangIds || access.kandangIds.length === 0) {
+      return NextResponse.json([]);
+    }
+    if (kandangId && !access.kandangIds.includes(kandangId)) {
+      return NextResponse.json([]);
+    }
   }
 
   const conditions = [
@@ -25,14 +36,22 @@ export async function GET(request: Request) {
     conditions.push(eq(recordings.kandangId, kandangId));
   }
 
+  if (access.role === "staff" && access.kandangIds && access.kandangIds.length > 0) {
+    conditions.push(inArray(recordings.kandangId, access.kandangIds));
+  }
+
   const filteredRows = await db
     .select()
     .from(recordings)
     .where(and(...conditions))
     .orderBy(desc(recordings.date));
 
-  const allRecordingsRows = await db.select().from(recordings);
-  const kandangRows = await db.select().from(kandangTable);
+  const allRecordingsRows = access.role === "staff" && access.kandangIds?.length
+    ? await db.select().from(recordings).where(inArray(recordings.kandangId, access.kandangIds))
+    : await db.select().from(recordings);
+  const kandangRows = access.role === "staff" && access.kandangIds?.length
+    ? await db.select().from(kandangTable).where(inArray(kandangTable.id, access.kandangIds))
+    : await db.select().from(kandangTable);
 
   const kandangMap = new Map(kandangRows.map((row) => [row.id, mapKandang(row)]));
   const allRecordings = allRecordingsRows.map(mapRecording);

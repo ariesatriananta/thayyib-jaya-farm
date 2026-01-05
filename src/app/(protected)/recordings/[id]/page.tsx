@@ -25,12 +25,15 @@ import { ArrowLeft } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import type { Kandang, Recording } from '@/lib/mock/types';
 import { signalNavigationDone } from '@/lib/ui/navigationProgress';
+import { useSession } from 'next-auth/react';
 
 const RecordingEdit = () => {
   const params = useParams<{ id: string }>();
   const id = params?.id;
   const router = useRouter();
   const { toast } = useToast();
+  const { data: session } = useSession();
+  const role = session?.user?.role;
   const [kandangList, setKandangList] = useState<Kandang[]>([]);
   const [recording, setRecording] = useState<Recording | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -178,6 +181,17 @@ const RecordingEdit = () => {
 
   if (isLoading) {
     return <Loading />;
+  }
+
+  if (role === 'staff' && kandangList.length === 0) {
+    return (
+      <AppLayout title="Edit Pencatatan" subtitle="Ubah data pencatatan harian">
+        <EmptyState
+          title="Belum ada akses kandang"
+          description="Hubungi admin untuk menambahkan akses kandang pada akun Anda."
+        />
+      </AppLayout>
+    );
   }
 
   if (notFound) {

@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { onNavigationDone } from '@/lib/ui/navigationProgress';
+import { useSession } from 'next-auth/react';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -29,6 +30,11 @@ export function Sidebar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const { data: session } = useSession();
+  const role = session?.user?.role;
+  const visibleNavigation = role === 'staff'
+    ? navigation.filter((item) => ['/','/recordings','/reports'].includes(item.href))
+    : navigation;
 
   const isActive = (href: string) => {
     if (href === '/') {
@@ -86,7 +92,7 @@ export function Sidebar() {
 
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-1">
-            {navigation.map((item) => (
+            {visibleNavigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}

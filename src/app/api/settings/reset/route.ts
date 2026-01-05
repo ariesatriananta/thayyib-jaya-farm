@@ -3,8 +3,14 @@ import { db } from "@/lib/db";
 import { kandang, recordings, settings } from "@/lib/db/schema";
 import { initialKandang, initialRecordings, initialSettings } from "@/lib/mock/mockData";
 import { SETTINGS_ID } from "@/lib/db/constants";
+import { getAccessContext, isAdmin } from "@/lib/db/access";
 
 export async function POST() {
+  const access = await getAccessContext();
+  if (!isAdmin(access.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   await db.delete(recordings);
   await db.delete(kandang);
   await db.delete(settings);

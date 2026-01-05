@@ -25,10 +25,14 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import type { Kandang } from '@/lib/mock/types';
 import { signalNavigationDone } from '@/lib/ui/navigationProgress';
+import { useSession } from 'next-auth/react';
+import { EmptyState } from '@/components/common/EmptyState';
 
 const RecordingNew = () => {
   const router = useRouter();
   const { toast } = useToast();
+  const { data: session } = useSession();
+  const role = session?.user?.role;
   const [kandangList, setKandangList] = useState<Kandang[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -164,6 +168,17 @@ const RecordingNew = () => {
 
   if (isLoading) {
     return <Loading />;
+  }
+
+  if (role === 'staff' && kandangList.length === 0) {
+    return (
+      <AppLayout title="Tambah Pencatatan" subtitle="Tambah data pencatatan harian baru">
+        <EmptyState
+          title="Belum ada akses kandang"
+          description="Hubungi admin untuk menambahkan akses kandang pada akun Anda."
+        />
+      </AppLayout>
+    );
   }
 
   return (

@@ -3,14 +3,26 @@ import { randomUUID } from "crypto";
 import { db } from "@/lib/db";
 import { recordings } from "@/lib/db/schema";
 import { mapRecording } from "@/lib/db/mappers";
-import { and, desc, eq, gte, lte } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lte } from "drizzle-orm";
+import { getAccessContext } from "@/lib/db/access";
 
 export async function GET(request: Request) {
+  const access = await getAccessContext();
   const { searchParams } = new URL(request.url);
   const kandangId = searchParams.get("kandangId");
   const startDate = searchParams.get("startDate");
   const endDate = searchParams.get("endDate");
   const date = searchParams.get("date");
+
+  if (access.role === "staff") {
+    if (!access.kandangIds || access.kandangIds.length === 0) {
+      return NextResponse.json(date && kandangId ? null : []);
+    }
+
+    if (kandangId && !access.kandangIds.includes(kandangId)) {
+      return NextResponse.json(date && kandangId ? null : []);
+    }
+  }
 
   if (date && kandangId) {
     const rows = await db
@@ -31,6 +43,10 @@ export async function GET(request: Request) {
     conditions.push(eq(recordings.kandangId, kandangId));
   }
 
+  if (access.role === "staff" && access.kandangIds && access.kandangIds.length > 0) {
+    conditions.push(inArray(recordings.kandangId, access.kandangIds));
+  }
+
   const query = db.select().from(recordings);
   const rows = conditions.length
     ? await query.where(and(...conditions)).orderBy(desc(recordings.date))
@@ -39,7 +55,17 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const access = await getAccessContext();
+  if (access.role === "staff") {
+    if (!access.kandangIds || access.kandangIds.length === 0) {
+      return NextResponse.json({ error: "Belum ada akses kandang" }, { status: 403 });
+    }
+  }
+
   const body = await request.json();
+  if (access.role === "staff" && !access.kandangIds?.includes(body.kandangId)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const feedUsedKg = Math.max(0, body.feedInKg - body.feedRemainingKg);
 
   const [created] = await db.insert(recordings).values({

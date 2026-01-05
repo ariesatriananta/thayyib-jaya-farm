@@ -1,4 +1,4 @@
-import { pgTable, text, integer, real, timestamp, date, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, real, timestamp, date, uuid, uniqueIndex } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey(),
@@ -56,3 +56,19 @@ export const settings = pgTable("settings", {
     .defaultNow()
     .$onUpdate(() => new Date().toISOString()),
 });
+
+export const staffKandangAccess = pgTable(
+  "staff_kandang_access",
+  {
+    id: uuid("id").primaryKey(),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    kandangId: uuid("kandang_id").notNull().references(() => kandang.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).notNull().defaultNow(),
+  },
+  (table) => ({
+    userKandangUnique: uniqueIndex("staff_kandang_access_user_kandang_unique").on(
+      table.userId,
+      table.kandangId
+    ),
+  })
+);

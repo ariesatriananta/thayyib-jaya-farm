@@ -3,20 +3,26 @@ import { db } from "@/lib/db";
 import { recordings } from "@/lib/db/schema";
 import { mapRecording } from "@/lib/db/mappers";
 import { eq } from "drizzle-orm";
+import { getAccessContext } from "@/lib/db/access";
 
 interface RouteParams {
   params: { id: string };
 }
 
 export async function GET(_: Request, { params }: RouteParams) {
+  const access = await getAccessContext();
   const rows = await db.select().from(recordings).where(eq(recordings.id, params.id)).limit(1);
   if (rows.length === 0) {
+    return NextResponse.json(null);
+  }
+  if (access.role === "staff" && !access.kandangIds?.includes(rows[0].kandangId)) {
     return NextResponse.json(null);
   }
   return NextResponse.json(mapRecording(rows[0]));
 }
 
 export async function PUT(request: Request, { params }: RouteParams) {
+  const access = await getAccessContext();
   const body = await request.json();
   const existingRows = await db.select().from(recordings).where(eq(recordings.id, params.id)).limit(1);
   if (existingRows.length === 0) {
@@ -24,6 +30,9 @@ export async function PUT(request: Request, { params }: RouteParams) {
   }
 
   const existing = existingRows[0];
+  if (access.role === "staff" && !access.kandangIds?.includes(existing.kandangId)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const feedInKg = body.feedInKg ?? existing.feedInKg;
   const feedRemainingKg = body.feedRemainingKg ?? existing.feedRemainingKg;
   const feedUsedKg = Math.max(0, feedInKg - feedRemainingKg);
@@ -43,6 +52,15 @@ export async function PUT(request: Request, { params }: RouteParams) {
 }
 
 export async function DELETE(_: Request, { params }: RouteParams) {
+  const access = await getAccessContext();
+  const existingRows = await db.select().from(recordings).where(eq(recordings.id, params.id)).limit(1);
+  if (existingRows.length === 0) {
+    return NextResponse.json({ success: true });
+  }
+  if (access.role === "staff" && !access.kandangIds?.includes(existingRows[0].kandangId)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   await db.delete(recordings).where(eq(recordings.id, params.id));
   return NextResponse.json({ success: true });
 }

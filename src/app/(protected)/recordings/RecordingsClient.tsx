@@ -34,6 +34,7 @@ import { getHDPStatus } from '@/lib/mock/calculations';
 import { useToast } from '@/hooks/use-toast';
 import type { DailyMetrics, Kandang } from '@/lib/mock/types';
 import { signalNavigationDone } from '@/lib/ui/navigationProgress';
+import { useSession } from 'next-auth/react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +50,8 @@ import {
 const RecordingsClient = () => {
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { data: session } = useSession();
+  const role = session?.user?.role;
 
   const [filters, setFilters] = useState({
     startDate: format(subDays(new Date(), 7), 'yyyy-MM-dd'),
@@ -131,6 +134,17 @@ const RecordingsClient = () => {
 
   if (isLoading) {
     return <Loading />;
+  }
+
+  if (role === 'staff' && kandangList.length === 0) {
+    return (
+      <AppLayout title="Pencatatan Harian" subtitle="Kelola data pencatatan harian kandang">
+        <EmptyState
+          title="Belum ada akses kandang"
+          description="Hubungi admin untuk menambahkan akses kandang pada akun Anda."
+        />
+      </AppLayout>
+    );
   }
 
   return (

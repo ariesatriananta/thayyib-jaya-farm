@@ -8,13 +8,18 @@ import { KandangStatusGrid } from '@/components/dashboard/KandangStatusGrid';
 import { PerformanceList } from '@/components/dashboard/PerformanceList';
 import { QuickAddRecording } from '@/components/dashboard/QuickAddRecording';
 import { reportService } from '@/lib/services/reportService';
+import { kandangService } from '@/lib/services/kandangService';
 import { Egg, Wheat, Skull, TrendingUp, Activity, Home } from 'lucide-react';
-import type { DashboardSummary, KandangStatus } from '@/lib/mock/types';
+import type { DashboardSummary, KandangStatus, Kandang } from '@/lib/mock/types';
 import Loading from './loading';
 import { signalNavigationDone } from '@/lib/ui/navigationProgress';
+import { useSession } from 'next-auth/react';
+import { EmptyState } from '@/components/common/EmptyState';
 
 const Dashboard = () => {
   const today = format(new Date(), 'yyyy-MM-dd');
+  const { data: session } = useSession();
+  const role = session?.user?.role;
   const [summary, setSummary] = useState<DashboardSummary>({
     totalEggsKg: 0,
     totalEggsCount: 0,
@@ -28,19 +33,22 @@ const Dashboard = () => {
   const [kandangStatuses, setKandangStatuses] = useState<KandangStatus[]>([]);
   const [topPerformers, setTopPerformers] = useState<KandangStatus[]>([]);
   const [bottomPerformers, setBottomPerformers] = useState<KandangStatus[]>([]);
+  const [kandangList, setKandangList] = useState<Kandang[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
 
     Promise.all([
+      kandangService.getAll(),
       reportService.getDashboardSummary(today),
       reportService.getKandangStatuses(today),
       reportService.getTopPerformers(today, 3),
       reportService.getBottomPerformers(today, 3),
     ])
-      .then(([summaryData, statuses, top, bottom]) => {
+      .then(([kandangData, summaryData, statuses, top, bottom]) => {
         if (!isMounted) return;
+        setKandangList(kandangData);
         setSummary(summaryData);
         setKandangStatuses(statuses);
         setTopPerformers(top);
@@ -61,6 +69,20 @@ const Dashboard = () => {
 
   if (isLoading) {
     return <Loading />;
+  }
+
+  if (role === 'staff' && kandangList.length === 0) {
+    return (
+      <AppLayout
+        title="Dashboard"
+        subtitle={`Ringkasan data ${format(new Date(), 'EEEE, dd MMMM yyyy')}`}
+      >
+        <EmptyState
+          title="Belum ada akses kandang"
+          description="Hubungi admin untuk menambahkan akses kandang pada akun Anda."
+        />
+      </AppLayout>
+    );
   }
 
   return (

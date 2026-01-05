@@ -5,8 +5,14 @@ import { mapSettings } from "@/lib/db/mappers";
 import { initialSettings } from "@/lib/mock/mockData";
 import { SETTINGS_ID } from "@/lib/db/constants";
 import { eq } from "drizzle-orm";
+import { getAccessContext, isAdmin } from "@/lib/db/access";
 
 export async function GET() {
+  const access = await getAccessContext();
+  if (!isAdmin(access.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const rows = await db.select().from(settings).limit(1);
   if (rows.length === 0) {
     const [created] = await db.insert(settings).values({
@@ -22,6 +28,11 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
+  const access = await getAccessContext();
+  if (!isAdmin(access.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const body = await request.json();
   const existing = await db.select().from(settings).limit(1);
   if (existing.length > 0) {

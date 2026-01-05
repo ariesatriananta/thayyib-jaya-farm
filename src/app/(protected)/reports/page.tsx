@@ -32,6 +32,7 @@ import { getHDPStatus } from '@/lib/mock/calculations';
 import { BarChart3, TrendingUp, Trophy, Filter } from 'lucide-react';
 import type { DailyMetrics, Kandang, RankingEntry } from '@/lib/mock/types';
 import { signalNavigationDone } from '@/lib/ui/navigationProgress';
+import { useSession } from 'next-auth/react';
 import {
   LineChart,
   Line,
@@ -47,6 +48,8 @@ import {
 
 const Reports = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const { data: session } = useSession();
+  const role = session?.user?.role;
   const [filters, setFilters] = useState({
     startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
     endDate: format(new Date(), 'yyyy-MM-dd'),
@@ -113,6 +116,17 @@ const Reports = () => {
 
   if (isLoading) {
     return <Loading />;
+  }
+
+  if (role === 'staff' && kandangList.length === 0) {
+    return (
+      <AppLayout title="Laporan & Analisis" subtitle="Analisis performa kandang">
+        <EmptyState
+          title="Belum ada akses kandang"
+          description="Hubungi admin untuk menambahkan akses kandang pada akun Anda."
+        />
+      </AppLayout>
+    );
   }
 
   return (
