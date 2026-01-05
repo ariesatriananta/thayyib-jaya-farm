@@ -99,9 +99,14 @@ const LoginClient = () => {
         </Card>
 
         {/* Footer */}
-        <p className="text-center text-xs text-muted-foreground">
-          Ac 2024 Thayyib Jaya Farm. All rights reserved.
-        </p>
+        <div className="text-center">
+          <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground/80">
+            Thayyib Jaya Farm
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Ac 2026. All rights reserved.
+          </p>
+        </div>
       </div>
     </div>
   );

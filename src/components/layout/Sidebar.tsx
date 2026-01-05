@@ -58,7 +58,10 @@ export function Sidebar() {
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-4 left-4 z-50 lg:hidden"
+        className={cn(
+          "fixed top-4 z-50 lg:hidden",
+          isOpen ? "right-4" : "left-4"
+        )}
         onClick={() => setIsOpen(!isOpen)}
       >
         {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -123,9 +126,14 @@ export function Sidebar() {
 
           {/* Footer */}
           <div className="px-6 py-4 border-t border-sidebar-border">
-            <p className="text-xs text-muted-foreground text-center">
-              © 2024 Thayyib Jaya Farm
-            </p>
+            <div className="text-center">
+              <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground/80">
+                Thayyib Jaya Farm
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Ac 2026. All rights reserved.
+              </p>
+            </div>
           </div>
         </div>
       </aside>
