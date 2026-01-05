@@ -46,7 +46,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Username sudah digunakan" }, { status: 400 });
   }
 
-  const now = new Date().toISOString();
   const passwordHash = await bcrypt.hash(password, 10);
 
   const [created] = await db.insert(users).values({
@@ -55,8 +54,6 @@ export async function POST(request: Request) {
     name,
     role,
     passwordHash,
-    createdAt: now,
-    updatedAt: now,
   }).returning();
 
   return NextResponse.json({

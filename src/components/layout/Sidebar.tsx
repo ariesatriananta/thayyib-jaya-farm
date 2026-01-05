@@ -32,11 +32,14 @@ export function Sidebar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
-  const { data: session } = useSession();
-  const role = session?.user?.role;
-  const visibleNavigation = role === 'staff'
-    ? navigation.filter((item) => ['/','/recordings','/reports'].includes(item.href))
-    : navigation;
+  const { data: session, status } = useSession();
+  const role = status === 'authenticated' ? session?.user?.role : null;
+  const staffAllowed = ['/', '/recordings', '/reports'];
+  const visibleNavigation = status === 'loading'
+    ? navigation.filter((item) => staffAllowed.includes(item.href))
+    : role === 'staff'
+      ? navigation.filter((item) => staffAllowed.includes(item.href))
+      : navigation;
 
   const isActive = (href: string) => {
     if (href === '/') {
