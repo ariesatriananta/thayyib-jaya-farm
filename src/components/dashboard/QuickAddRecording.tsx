@@ -12,12 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Loader2 } from 'lucide-react';
 import { kandangService } from '@/lib/services/kandangService';
 import { recordingService } from '@/lib/services/recordingService';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import type { Kandang } from '@/lib/mock/types';
+import { useSession } from 'next-auth/react';
 
 interface QuickAddRecordingProps {
   onClose?: () => void;
@@ -25,11 +26,14 @@ interface QuickAddRecordingProps {
 
 export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
   const { toast } = useToast();
+  const { data: session } = useSession();
+  const role = session?.user?.role;
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [kandangList, setKandangList] = useState<Kandang[]>([]);
   
   const today = format(new Date(), 'yyyy-MM-dd');
+  const adminOffset = role === 'admin' ? 2 : 0;
   const fieldAnimation = (index: number) => ({
     animationDelay: `${index * 60}ms`,
     animationDuration: "520ms",
@@ -43,6 +47,8 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
     feedRemainingKg: '',
     eggsKg: '',
     eggsCount: '',
+    feedPriceKg: '0',
+    eggsPriceKg: '0',
     deadChickenCount: '0',
     notes: '',
   });
@@ -84,8 +90,10 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
         kandangId: formData.kandangId,
         date: today,
         feedInKg: parseFloat(formData.feedInKg) || 0,
+        feedPriceKg: role === 'admin' ? parseFloat(formData.feedPriceKg) || 0 : 0,
         feedRemainingKg: parseFloat(formData.feedRemainingKg) || 0,
         eggsKg: parseFloat(formData.eggsKg) || 0,
+        eggsPriceKg: role === 'admin' ? parseFloat(formData.eggsPriceKg) || 0 : 0,
         eggsCount: parseInt(formData.eggsCount) || 0,
         deadChickenCount: parseInt(formData.deadChickenCount) || 0,
         notes: formData.notes,
@@ -103,6 +111,8 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
         feedRemainingKg: '',
         eggsKg: '',
         eggsCount: '',
+        feedPriceKg: '0',
+        eggsPriceKg: '0',
         deadChickenCount: '0',
         notes: '',
       });
@@ -213,7 +223,33 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
               />
             </div>
 
-            <div className="space-y-2 animate-slide-up" style={fieldAnimation(5)}>
+            {role === 'admin' && (
+              <div className="space-y-2 animate-slide-up" style={fieldAnimation(5)}>
+                <Label>Harga Pakan (per kg)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={formData.feedPriceKg}
+                  onChange={(e) => setFormData({ ...formData, feedPriceKg: e.target.value })}
+                  placeholder="0"
+                />
+              </div>
+            )}
+
+            {role === 'admin' && (
+              <div className="space-y-2 animate-slide-up" style={fieldAnimation(6)}>
+                <Label>Harga Telur (per kg)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={formData.eggsPriceKg}
+                  onChange={(e) => setFormData({ ...formData, eggsPriceKg: e.target.value })}
+                  placeholder="0"
+                />
+              </div>
+            )}
+
+            <div className="space-y-2 animate-slide-up" style={fieldAnimation(5 + adminOffset)}>
               <Label>Ayam Mati</Label>
               <Input
                 type="number"
@@ -224,7 +260,7 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
               />
             </div>
 
-            <div className="space-y-2 sm:col-span-2 animate-slide-up" style={fieldAnimation(6)}>
+            <div className="space-y-2 sm:col-span-2 animate-slide-up" style={fieldAnimation(6 + adminOffset)}>
               <Label>Keterangan</Label>
               <Input
                 value={formData.notes}
@@ -234,7 +270,7 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
             </div>
           </div>
 
-          <div className="flex gap-2 justify-end animate-slide-up" style={fieldAnimation(7)}>
+          <div className="flex gap-2 justify-end animate-slide-up" style={fieldAnimation(7 + adminOffset)}>
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
               Batal
             </Button>
@@ -242,7 +278,7 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
               type="submit" 
               disabled={!formData.kandangId || !formData.feedInKg || !formData.eggsKg || !formData.eggsCount || isSubmitting}
             >
-              Simpan
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Simpan'}
             </Button>
           </div>
         </form>

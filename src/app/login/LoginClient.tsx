@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Loader2 } from 'lucide-react';
 
 const LoginClient = () => {
   const router = useRouter();
@@ -87,7 +88,7 @@ const LoginClient = () => {
 
               <div className="pt-4">
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? 'Memproses...' : 'Masuk'}
+                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Masuk'}
                 </Button>
                 {errorMessage && (
                   <p className="text-sm text-destructive text-center mt-3">{errorMessage}</p>

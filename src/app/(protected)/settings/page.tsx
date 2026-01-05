@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { settingsService } from '@/lib/services/settingsService';
 import { useToast } from '@/hooks/use-toast';
-import { Settings as SettingsIcon, Save } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Loader2 } from 'lucide-react';
 import { signalNavigationDone } from '@/lib/ui/navigationProgress';
 
 const Settings = () => {
@@ -131,8 +131,14 @@ const Settings = () => {
 
             <div className="flex justify-end">
               <Button onClick={handleSave} disabled={isSaving} className="gap-2">
-                <Save className="w-4 h-4" />
-                {isSaving ? 'Menyimpan...' : 'Simpan Pengaturan'}
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Simpan Pengaturan
+                  </>
+                )}
               </Button>
             </div>
           </CardContent>

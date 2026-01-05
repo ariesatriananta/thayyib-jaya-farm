@@ -14,9 +14,11 @@ export interface Recording {
   kandangId: string;
   date: string;
   feedInKg: number;
+  feedPriceKg: number;
   feedRemainingKg: number;
   feedUsedKg: number;
   eggsKg: number;
+  eggsPriceKg: number;
   eggsCount: number;
   deadChickenCount: number;
   notes: string;
@@ -31,24 +33,35 @@ export interface DailyMetrics {
   kandangName: string;
   totalChickenToday: number;
   feedInKg: number;
+  feedPriceKg: number;
   feedRemainingKg: number;
   feedUsedKg: number;
   eggsKg: number;
+  eggsPriceKg: number;
   eggsCount: number;
   deadChickenCount: number;
+  feedCost: number;
+  eggsRevenue: number;
+  hpp: number;
   fcr: number;
   hdpPercent: number;
   weekNumber: number;
   monthLabel: string;
   dayName: string;
   notes: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface DashboardSummary {
   totalEggsKg: number;
   totalEggsCount: number;
+  totalFeedIn: number;
   totalFeedUsed: number;
   totalDeadChickens: number;
+  totalEggsRevenue: number;
+  totalFeedCost: number;
+  totalHpp: number;
   averageFCR: number;
   averageHDP: number;
   kandangCount: number;
@@ -71,6 +84,7 @@ export interface ReportFilters {
   startDate: string;
   endDate: string;
   kandangId: string | 'all';
+  kandangIds?: string[];
 }
 
 export interface RankingEntry {

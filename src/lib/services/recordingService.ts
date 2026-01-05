@@ -5,8 +5,10 @@ export interface CreateRecordingInput {
   kandangId: string;
   date: string;
   feedInKg: number;
+  feedPriceKg?: number;
   feedRemainingKg: number;
   eggsKg: number;
+  eggsPriceKg?: number;
   eggsCount: number;
   deadChickenCount: number;
   notes: string;
@@ -65,5 +67,17 @@ export const recordingService = {
     const params = new URLSearchParams({ startDate, endDate });
     if (kandangId) params.set('kandangId', kandangId);
     return fetchJson<DailyMetrics[]>(`/api/recordings/metrics?${params.toString()}`);
+  },
+
+  async getLatestDate(kandangIds?: string[]): Promise<string | null> {
+    const params = new URLSearchParams();
+    if (kandangIds && kandangIds.length > 0) {
+      params.set("kandangIds", kandangIds.join(","));
+    }
+    const url = params.toString()
+      ? `/api/recordings/latest-date?${params.toString()}`
+      : "/api/recordings/latest-date";
+    const response = await fetchJson<{ date: string | null }>(url);
+    return response.date;
   },
 };

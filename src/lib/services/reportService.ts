@@ -8,43 +8,72 @@ import type {
 import { fetchJson } from './apiClient';
 
 export const reportService = {
-  async getDashboardSummary(date?: string): Promise<DashboardSummary> {
-    const params = date ? `?date=${encodeURIComponent(date)}` : '';
-    return fetchJson<DashboardSummary>(`/api/reports/summary${params}`);
+  async getDashboardSummary(date?: string, kandangIds?: string[]): Promise<DashboardSummary> {
+    const params = new URLSearchParams();
+    if (date) params.set('date', date);
+    if (kandangIds && kandangIds.length > 0) params.set('kandangIds', kandangIds.join(','));
+    const query = params.toString();
+    return fetchJson<DashboardSummary>(`/api/reports/summary${query ? `?${query}` : ''}`);
   },
 
-  async getKandangStatuses(date?: string): Promise<KandangStatus[]> {
-    const params = date ? `?date=${encodeURIComponent(date)}` : '';
-    return fetchJson<KandangStatus[]>(`/api/reports/statuses${params}`);
+  async getKandangStatuses(date?: string, kandangIds?: string[]): Promise<KandangStatus[]> {
+    const params = new URLSearchParams();
+    if (date) params.set('date', date);
+    if (kandangIds && kandangIds.length > 0) params.set('kandangIds', kandangIds.join(','));
+    const query = params.toString();
+    return fetchJson<KandangStatus[]>(`/api/reports/statuses${query ? `?${query}` : ''}`);
   },
 
-  async getTopPerformers(date?: string, limit: number = 3): Promise<KandangStatus[]> {
+  async getTopPerformers(date?: string, limit: number = 3, kandangIds?: string[]): Promise<KandangStatus[]> {
     const params = new URLSearchParams();
     if (date) params.set('date', date);
     params.set('limit', limit.toString());
+    if (kandangIds && kandangIds.length > 0) params.set('kandangIds', kandangIds.join(','));
     return fetchJson<KandangStatus[]>(`/api/reports/top?${params.toString()}`);
   },
 
-  async getBottomPerformers(date?: string, limit: number = 3): Promise<KandangStatus[]> {
+  async getBottomPerformers(date?: string, limit: number = 3, kandangIds?: string[]): Promise<KandangStatus[]> {
     const params = new URLSearchParams();
     if (date) params.set('date', date);
     params.set('limit', limit.toString());
+    if (kandangIds && kandangIds.length > 0) params.set('kandangIds', kandangIds.join(','));
     return fetchJson<KandangStatus[]>(`/api/reports/bottom?${params.toString()}`);
   },
 
   async getReportData(filters: ReportFilters): Promise<{
     dailyMetrics: DailyMetrics[];
-    trendData: { date: string; eggsKg: number; feedUsedKg: number; hdpPercent: number }[];
+    trendData: {
+      date: string;
+      eggsKg: number;
+      feedInKg: number;
+      feedUsedKg: number;
+      hdpPercent: number;
+      feedCost: number;
+      eggsRevenue: number;
+      hpp: number;
+    }[];
     ranking: RankingEntry[];
   }> {
     const params = new URLSearchParams({
       startDate: filters.startDate,
       endDate: filters.endDate,
-      kandangId: filters.kandangId,
+      kandangId: filters.kandangId ?? "all",
     });
+    if (filters.kandangIds !== undefined) {
+      params.set("kandangIds", filters.kandangIds.join(","));
+    }
     return fetchJson<{
       dailyMetrics: DailyMetrics[];
-      trendData: { date: string; eggsKg: number; feedUsedKg: number; hdpPercent: number }[];
+      trendData: {
+        date: string;
+        eggsKg: number;
+        feedInKg: number;
+        feedUsedKg: number;
+        hdpPercent: number;
+        feedCost: number;
+        eggsRevenue: number;
+        hpp: number;
+      }[];
       ranking: RankingEntry[];
     }>(`/api/reports?${params.toString()}`);
   },

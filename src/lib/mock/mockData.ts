@@ -130,6 +130,8 @@ function generateRecordings(): Recording[] {
       let eggsKg: number;
       let eggsCount: number;
       let deadChickenCount: number;
+      let feedPriceKg: number;
+      let eggsPriceKg: number;
       
       if (hasLowDay) {
         // Low performance day
@@ -142,6 +144,8 @@ function generateRecordings(): Recording[] {
         feedInKg = Number((feedUsed + randomFloat(4, 12, 1)).toFixed(1));
         feedRemainingKg = Number((feedInKg - feedUsed).toFixed(1));
         deadChickenCount = randomBetween(3, isLowPerformanceKandang ? 10 : 6);
+        feedPriceKg = randomFloat(7000, 8200, 0);
+        eggsPriceKg = randomFloat(23000, 27000, 0);
       } else {
         // Normal/good performance day
         const hdpPercent = isHighPerformanceKandang
@@ -153,6 +157,8 @@ function generateRecordings(): Recording[] {
         feedInKg = Number((feedUsed + randomFloat(0, 10, 1)).toFixed(1));
         feedRemainingKg = Number((feedInKg - feedUsed).toFixed(1));
         deadChickenCount = randomBetween(0, isLowPerformanceKandang ? 4 : 3);
+        feedPriceKg = randomFloat(6800, 8000, 0);
+        eggsPriceKg = randomFloat(24000, 30000, 0);
       }
       cumulativeDead += deadChickenCount;
 
@@ -161,9 +167,11 @@ function generateRecordings(): Recording[] {
         kandangId: kandang.id,
         date,
         feedInKg,
+        feedPriceKg,
         feedRemainingKg,
         feedUsedKg: Math.max(0, feedInKg - feedRemainingKg),
         eggsKg,
+        eggsPriceKg,
         eggsCount,
         deadChickenCount,
         notes: hasLowDay ? 'Produksi menurun - cuaca panas' : '',

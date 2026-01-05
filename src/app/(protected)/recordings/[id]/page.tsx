@@ -21,7 +21,7 @@ import {
 import { kandangService } from '@/lib/services/kandangService';
 import { recordingService } from '@/lib/services/recordingService';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import type { Kandang, Recording } from '@/lib/mock/types';
 import { signalNavigationDone } from '@/lib/ui/navigationProgress';
@@ -47,6 +47,8 @@ const RecordingEdit = () => {
     feedRemainingKg: '',
     eggsKg: '',
     eggsCount: '',
+    feedPriceKg: '0',
+    eggsPriceKg: '0',
     deadChickenCount: '',
     notes: '',
   });
@@ -88,6 +90,8 @@ const RecordingEdit = () => {
             feedRemainingKg: data.feedRemainingKg.toString(),
             eggsKg: data.eggsKg.toString(),
             eggsCount: data.eggsCount.toString(),
+            feedPriceKg: data.feedPriceKg.toString(),
+            eggsPriceKg: data.eggsPriceKg.toString(),
             deadChickenCount: data.deadChickenCount.toString(),
             notes: data.notes,
           });
@@ -126,6 +130,12 @@ const RecordingEdit = () => {
     if (!formData.eggsCount || parseInt(formData.eggsCount) < 0) {
       newErrors.eggsCount = 'Masukkan jumlah telur (butir)';
     }
+    if (role === 'admin' && parseFloat(formData.feedPriceKg) < 0) {
+      newErrors.feedPriceKg = 'Harga pakan tidak boleh negatif';
+    }
+    if (role === 'admin' && parseFloat(formData.eggsPriceKg) < 0) {
+      newErrors.eggsPriceKg = 'Harga telur tidak boleh negatif';
+    }
     if (parseFloat(formData.feedRemainingKg) > parseFloat(formData.feedInKg)) {
       newErrors.feedRemainingKg = 'Sisa pakan tidak boleh lebih dari pakan masuk';
     }
@@ -146,8 +156,10 @@ const RecordingEdit = () => {
         kandangId: formData.kandangId,
         date: formData.date,
         feedInKg: parseFloat(formData.feedInKg),
+        feedPriceKg: role === 'admin' ? parseFloat(formData.feedPriceKg) || 0 : 0,
         feedRemainingKg: parseFloat(formData.feedRemainingKg) || 0,
         eggsKg: parseFloat(formData.eggsKg),
+        eggsPriceKg: role === 'admin' ? parseFloat(formData.eggsPriceKg) || 0 : 0,
         eggsCount: parseInt(formData.eggsCount),
         deadChickenCount: parseInt(formData.deadChickenCount) || 0,
         notes: formData.notes,
@@ -299,6 +311,35 @@ const RecordingEdit = () => {
                 </div>
               </div>
 
+              {role === 'admin' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Harga Pakan (per kg)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={formData.feedPriceKg}
+                      onChange={(e) => handleChange('feedPriceKg', e.target.value)}
+                      className={errors.feedPriceKg ? 'border-destructive' : ''}
+                      placeholder="0"
+                    />
+                    {errors.feedPriceKg && <p className="text-sm text-destructive">{errors.feedPriceKg}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Harga Telur (per kg)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={formData.eggsPriceKg}
+                      onChange={(e) => handleChange('eggsPriceKg', e.target.value)}
+                      className={errors.eggsPriceKg ? 'border-destructive' : ''}
+                      placeholder="0"
+                    />
+                    {errors.eggsPriceKg && <p className="text-sm text-destructive">{errors.eggsPriceKg}</p>}
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Telur (kg) *</Label>
@@ -355,7 +396,7 @@ const RecordingEdit = () => {
                   <Button type="button" variant="outline">Batal</Button>
                 </Link>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
+                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Simpan Perubahan'}
                 </Button>
               </div>
             </form>

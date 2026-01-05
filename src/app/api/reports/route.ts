@@ -12,6 +12,14 @@ export async function GET(request: Request) {
   const startDate = searchParams.get("startDate");
   const endDate = searchParams.get("endDate");
   const kandangId = searchParams.get("kandangId") || "all";
+  const kandangIdsParam = searchParams.get("kandangIds");
+  const requestedIds = kandangIdsParam
+    ? kandangIdsParam.split(",").map((id) => id.trim()).filter(Boolean)
+    : null;
+  const allowedIds = access.role === "staff" ? (access.kandangIds || []) : null;
+  const filteredIds = requestedIds
+    ? requestedIds.filter((id) => !allowedIds || allowedIds.includes(id))
+    : allowedIds;
 
   if (!startDate || !endDate) {
     return NextResponse.json({ dailyMetrics: [], trendData: [], ranking: [] });
@@ -21,15 +29,23 @@ export async function GET(request: Request) {
     return NextResponse.json({ dailyMetrics: [], trendData: [], ranking: [] });
   }
 
+  if (filteredIds && filteredIds.length === 0) {
+    return NextResponse.json({ dailyMetrics: [], trendData: [], ranking: [] });
+  }
+
+  if (filteredIds && kandangId !== "all" && !filteredIds.includes(kandangId)) {
+    return NextResponse.json({ dailyMetrics: [], trendData: [], ranking: [] });
+  }
+
   if (access.role === "staff" && kandangId !== "all" && !access.kandangIds?.includes(kandangId)) {
     return NextResponse.json({ dailyMetrics: [], trendData: [], ranking: [] });
   }
 
-  const kandangRows = access.role === "staff"
-    ? await db.select().from(kandangTable).where(inArray(kandangTable.id, access.kandangIds!))
+  const kandangRows = filteredIds
+    ? await db.select().from(kandangTable).where(inArray(kandangTable.id, filteredIds))
     : await db.select().from(kandangTable);
-  const recordingRows = access.role === "staff"
-    ? await db.select().from(recordings).where(inArray(recordings.kandangId, access.kandangIds!))
+  const recordingRows = filteredIds
+    ? await db.select().from(recordings).where(inArray(recordings.kandangId, filteredIds))
     : await db.select().from(recordings);
 
   const data = buildReportData(

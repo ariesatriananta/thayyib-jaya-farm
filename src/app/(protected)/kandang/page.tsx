@@ -44,7 +44,7 @@ import {
 } from '@/components/ui/select';
 import { KandangStatusBadge } from '@/components/common/StatusBadge';
 import { EmptyState } from '@/components/common/EmptyState';
-import { Plus, Edit, Trash2, Home } from 'lucide-react';
+import { Plus, Edit, Trash2, Home, Loader2 } from 'lucide-react';
 import { kandangService } from '@/lib/services/kandangService';
 import { settingsService } from '@/lib/services/settingsService';
 import { useToast } from '@/hooks/use-toast';
@@ -62,6 +62,7 @@ const KandangPage = () => {
   const [kandangList, setKandangList] = useState<Kandang[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingKandang, setEditingKandang] = useState<Kandang | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -152,6 +153,7 @@ const KandangPage = () => {
   const handleSubmit = async () => {
     if (!validate()) return;
 
+    setIsSubmitting(true);
     try {
       if (editingKandang) {
         await kandangService.update(editingKandang.id, {
@@ -183,6 +185,8 @@ const KandangPage = () => {
         description: 'Gagal menyimpan data.',
         variant: 'destructive',
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -312,8 +316,14 @@ const KandangPage = () => {
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Batal
                 </Button>
-                <Button onClick={handleSubmit}>
-                  {editingKandang ? 'Simpan Perubahan' : 'Tambah'}
+                <Button onClick={handleSubmit} disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : editingKandang ? (
+                    'Simpan Perubahan'
+                  ) : (
+                    'Tambah'
+                  )}
                 </Button>
               </DialogFooter>
             </DialogContent>

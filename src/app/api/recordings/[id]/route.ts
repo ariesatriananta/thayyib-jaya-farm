@@ -36,14 +36,22 @@ export async function PUT(request: Request, { params }: RouteParams) {
   const feedInKg = body.feedInKg ?? existing.feedInKg;
   const feedRemainingKg = body.feedRemainingKg ?? existing.feedRemainingKg;
   const feedUsedKg = Math.max(0, feedInKg - feedRemainingKg);
+  const feedPriceKg = access.role === "staff"
+    ? existing.feedPriceKg
+    : body.feedPriceKg ?? existing.feedPriceKg;
+  const eggsPriceKg = access.role === "staff"
+    ? existing.eggsPriceKg
+    : body.eggsPriceKg ?? existing.eggsPriceKg;
 
   const [updated] = await db
     .update(recordings)
     .set({
       ...body,
       feedInKg,
+      feedPriceKg,
       feedRemainingKg,
       feedUsedKg,
+      eggsPriceKg,
     })
     .where(eq(recordings.id, params.id))
     .returning();

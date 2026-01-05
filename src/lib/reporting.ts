@@ -28,12 +28,19 @@ export function buildDashboardSummary(
   }
 
   const { averageFCR, averageHDP } = calculateAverages(metrics);
+  const totalFeedCost = metrics.reduce((sum, m) => sum + m.feedCost, 0);
+  const totalEggsRevenue = metrics.reduce((sum, m) => sum + m.eggsRevenue, 0);
+  const totalHpp = totalEggsRevenue - totalFeedCost;
 
   return {
     totalEggsKg: Number(metrics.reduce((sum, m) => sum + m.eggsKg, 0).toFixed(1)),
     totalEggsCount: metrics.reduce((sum, m) => sum + m.eggsCount, 0),
+    totalFeedIn: Number(metrics.reduce((sum, m) => sum + m.feedInKg, 0).toFixed(1)),
     totalFeedUsed: Number(metrics.reduce((sum, m) => sum + m.feedUsedKg, 0).toFixed(1)),
     totalDeadChickens: metrics.reduce((sum, m) => sum + m.deadChickenCount, 0),
+    totalEggsRevenue: Number(totalEggsRevenue.toFixed(0)),
+    totalFeedCost: Number(totalFeedCost.toFixed(0)),
+    totalHpp: Number(totalHpp.toFixed(0)),
     averageFCR,
     averageHDP,
     kandangCount: kandangList.length,
@@ -90,7 +97,16 @@ export function buildReportData(
   filters: ReportFilters
 ): {
   dailyMetrics: DailyMetrics[];
-  trendData: { date: string; eggsKg: number; feedUsedKg: number; hdpPercent: number }[];
+  trendData: {
+    date: string;
+    eggsKg: number;
+    feedInKg: number;
+    feedUsedKg: number;
+    hdpPercent: number;
+    feedCost: number;
+    eggsRevenue: number;
+    hpp: number;
+  }[];
   ranking: RankingEntry[];
 } {
   const { startDate, endDate, kandangId } = filters;
@@ -110,12 +126,29 @@ export function buildReportData(
     }
   }
 
-  const dateMap = new Map<string, { eggsKg: number; feedUsedKg: number; hdpPercents: number[] }>();
+  const dateMap = new Map<string, {
+    eggsKg: number;
+    feedInKg: number;
+    feedUsedKg: number;
+    hdpPercents: number[];
+    feedCost: number;
+    eggsRevenue: number;
+  }>();
   for (const metric of dailyMetrics) {
-    const existing = dateMap.get(metric.date) || { eggsKg: 0, feedUsedKg: 0, hdpPercents: [] };
+    const existing = dateMap.get(metric.date) || {
+      eggsKg: 0,
+      feedInKg: 0,
+      feedUsedKg: 0,
+      hdpPercents: [],
+      feedCost: 0,
+      eggsRevenue: 0,
+    };
     existing.eggsKg += metric.eggsKg;
+    existing.feedInKg += metric.feedInKg;
     existing.feedUsedKg += metric.feedUsedKg;
     existing.hdpPercents.push(metric.hdpPercent);
+    existing.feedCost += metric.feedCost;
+    existing.eggsRevenue += metric.eggsRevenue;
     dateMap.set(metric.date, existing);
   }
 
@@ -123,10 +156,14 @@ export function buildReportData(
     .map(([date, data]) => ({
       date,
       eggsKg: Number(data.eggsKg.toFixed(1)),
+      feedInKg: Number(data.feedInKg.toFixed(1)),
       feedUsedKg: Number(data.feedUsedKg.toFixed(1)),
       hdpPercent: Number(
         (data.hdpPercents.reduce((a, b) => a + b, 0) / data.hdpPercents.length).toFixed(2)
       ),
+      feedCost: Number(data.feedCost.toFixed(0)),
+      eggsRevenue: Number(data.eggsRevenue.toFixed(0)),
+      hpp: Number((data.eggsRevenue - data.feedCost).toFixed(0)),
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 

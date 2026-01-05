@@ -16,6 +16,7 @@ interface StatCardProps {
   revealDelayMs?: number;
   revealDurationMs?: number;
   revealEasing?: string;
+  valueClassName?: string;
   subtitle?: string;
   icon: LucideIcon;
   trend?: {
@@ -46,6 +47,7 @@ export function StatCard({
   revealDelayMs,
   revealDurationMs,
   revealEasing,
+  valueClassName,
   subtitle,
   icon: Icon,
   trend,
@@ -94,7 +96,7 @@ export function StatCard({
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold mt-1 text-foreground">{displayValue}</p>
+            <p className={cn("text-2xl font-bold mt-1 text-foreground", valueClassName)}>{displayValue}</p>
             {subtitle && (
               <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
             )}

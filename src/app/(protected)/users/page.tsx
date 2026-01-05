@@ -49,7 +49,7 @@ import { staffAccessService, type StaffAccessItem } from "@/lib/services/staffAc
 import { kandangService } from "@/lib/services/kandangService";
 import type { Kandang } from "@/lib/mock/types";
 import { useSession } from "next-auth/react";
-import { Users, Shield, Trash2, Pencil } from "lucide-react";
+import { Users, Shield, Trash2, Pencil, Loader2 } from "lucide-react";
 
 const UsersPage = () => {
   const { toast } = useToast();
@@ -68,12 +68,14 @@ const UsersPage = () => {
     role: "staff" as "admin" | "staff",
     password: "",
   });
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
 
   const [editingUser, setEditingUser] = useState<UserItem | null>(null);
   const [editForm, setEditForm] = useState({
     name: "",
     role: "staff" as "admin" | "staff",
   });
+  const [isUpdatingUser, setIsUpdatingUser] = useState(false);
 
   const [selectedStaffId, setSelectedStaffId] = useState<string>("");
   const [selectedKandangIds, setSelectedKandangIds] = useState<string[]>([]);
@@ -139,6 +141,7 @@ const UsersPage = () => {
       return;
     }
 
+    setIsCreatingUser(true);
     try {
       const created = await userService.create({
         username: createForm.username.trim(),
@@ -156,6 +159,8 @@ const UsersPage = () => {
         description: error instanceof Error ? error.message : "Terjadi kesalahan.",
         variant: "destructive",
       });
+    } finally {
+      setIsCreatingUser(false);
     }
   };
 
@@ -174,6 +179,7 @@ const UsersPage = () => {
       return;
     }
 
+    setIsUpdatingUser(true);
     try {
       const updated = await userService.update(editingUser.id, {
         name: editForm.name.trim(),
@@ -189,6 +195,8 @@ const UsersPage = () => {
         description: error instanceof Error ? error.message : "Terjadi kesalahan.",
         variant: "destructive",
       });
+    } finally {
+      setIsUpdatingUser(false);
     }
   };
 
@@ -318,7 +326,9 @@ const UsersPage = () => {
                   <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
                     Batal
                   </Button>
-                  <Button onClick={handleCreateUser}>Simpan</Button>
+                  <Button onClick={handleCreateUser} disabled={isCreatingUser}>
+                    {isCreatingUser ? <Loader2 className="h-4 w-4 animate-spin" /> : "Simpan"}
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -400,7 +410,9 @@ const UsersPage = () => {
                                     <Button variant="outline" onClick={() => setEditingUser(null)}>
                                       Batal
                                     </Button>
-                                    <Button onClick={handleUpdateUser}>Simpan</Button>
+                                    <Button onClick={handleUpdateUser} disabled={isUpdatingUser}>
+                                      {isUpdatingUser ? <Loader2 className="h-4 w-4 animate-spin" /> : "Simpan"}
+                                    </Button>
                                   </DialogFooter>
                                 </DialogContent>
                               </Dialog>
@@ -479,7 +491,7 @@ const UsersPage = () => {
                       disabled={!selectedStaffId || isSavingAccess}
                       onClick={handleSaveAccess}
                     >
-                      {isSavingAccess ? "Menyimpan..." : "Simpan Akses"}
+                      {isSavingAccess ? <Loader2 className="h-4 w-4 animate-spin" /> : "Simpan Akses"}
                     </Button>
                   </div>
                 </div>

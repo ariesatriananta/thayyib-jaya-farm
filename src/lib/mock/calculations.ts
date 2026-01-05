@@ -66,6 +66,9 @@ export function buildDailyMetrics(
   const feedUsedKg = calculateFeedUsed(recording.feedInKg, recording.feedRemainingKg);
   const fcr = calculateFCR(feedUsedKg, recording.eggsKg);
   const hdpPercent = calculateHDP(recording.eggsCount, totalChickenToday);
+  const feedCost = Number((recording.feedInKg * recording.feedPriceKg).toFixed(2));
+  const eggsRevenue = Number((recording.eggsKg * recording.eggsPriceKg).toFixed(2));
+  const hpp = Number((eggsRevenue - feedCost).toFixed(2));
 
   return {
     date: recording.date,
@@ -74,17 +77,24 @@ export function buildDailyMetrics(
     kandangName: kandang.name,
     totalChickenToday,
     feedInKg: recording.feedInKg,
+    feedPriceKg: recording.feedPriceKg,
     feedRemainingKg: recording.feedRemainingKg,
     feedUsedKg,
     eggsKg: recording.eggsKg,
+    eggsPriceKg: recording.eggsPriceKg,
     eggsCount: recording.eggsCount,
     deadChickenCount: recording.deadChickenCount,
+    feedCost,
+    eggsRevenue,
+    hpp,
     fcr,
     hdpPercent,
     weekNumber: getWeekNumber(date),
     monthLabel: getMonthLabel(date),
     dayName: getDayName(date),
     notes: recording.notes,
+    createdAt: recording.createdAt,
+    updatedAt: recording.updatedAt,
   };
 }
 

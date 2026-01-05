@@ -67,19 +67,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const feedUsedKg = Math.max(0, body.feedInKg - body.feedRemainingKg);
+  const feedPriceKg = access.role === "staff" ? 0 : Number(body.feedPriceKg ?? 0);
+  const eggsPriceKg = access.role === "staff" ? 0 : Number(body.eggsPriceKg ?? 0);
 
-  const [created] = await db.insert(recordings).values({
+  const insertValues = {
     id: randomUUID(),
     kandangId: body.kandangId,
     date: body.date,
     feedInKg: body.feedInKg,
+    feedPriceKg,
     feedRemainingKg: body.feedRemainingKg,
     feedUsedKg,
     eggsKg: body.eggsKg,
+    eggsPriceKg,
     eggsCount: body.eggsCount,
     deadChickenCount: body.deadChickenCount,
     notes: body.notes || "",
-  }).returning();
+  } as typeof recordings.$inferInsert;
+
+  const [created] = await db.insert(recordings).values(insertValues).returning();
 
   return NextResponse.json(mapRecording(created));
 }

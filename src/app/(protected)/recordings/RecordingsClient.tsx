@@ -62,6 +62,7 @@ const RecordingsClient = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [kandangList, setKandangList] = useState<Kandang[]>([]);
   const [metrics, setMetrics] = useState<DailyMetrics[]>([]);
+  const [visibleRows, setVisibleRows] = useState(50);
   const [isLoading, setIsLoading] = useState(true);
   const [kandangLoaded, setKandangLoaded] = useState(false);
   const [metricsLoaded, setMetricsLoaded] = useState(false);
@@ -106,6 +107,10 @@ const RecordingsClient = () => {
       isMounted = false;
     };
   }, [filters.startDate, filters.endDate, filters.kandangId, refreshKey]);
+
+  useEffect(() => {
+    setVisibleRows(50);
+  }, [filters.startDate, filters.endDate, filters.kandangId]);
 
   useEffect(() => {
     if (!kandangLoaded || !metricsLoaded) return;
@@ -240,16 +245,19 @@ const RecordingsClient = () => {
                       <TableHead className="text-right">Ayam</TableHead>
                       <TableHead className="text-right">Mati</TableHead>
                       <TableHead className="text-right">Pakan (kg)</TableHead>
+                      {role === 'admin' && <TableHead className="text-right">Harga Pakan</TableHead>}
                       <TableHead className="text-right">Telur (kg)</TableHead>
                       <TableHead className="text-right">Telur (butir)</TableHead>
+                      {role === 'admin' && <TableHead className="text-right">Harga Telur</TableHead>}
                       <TableHead className="text-right">FCR</TableHead>
                       <TableHead className="text-right">HDP%</TableHead>
                       <TableHead>Status</TableHead>
+                      {role === 'admin' && <TableHead className="text-right">HPP</TableHead>}
                       <TableHead className="text-right">Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {metrics.map((m) => (
+                    {metrics.slice(0, visibleRows).map((m) => (
                       <TableRow key={`${m.date}-${m.kandangId}`}>
                         <TableCell className="font-medium">
                           {format(new Date(m.date), 'dd/MM/yyyy')}
@@ -259,13 +267,28 @@ const RecordingsClient = () => {
                         <TableCell className="text-right">{m.totalChickenToday.toLocaleString()}</TableCell>
                         <TableCell className="text-right">{m.deadChickenCount}</TableCell>
                         <TableCell className="text-right">{m.feedUsedKg}</TableCell>
+                        {role === 'admin' && (
+                          <TableCell className="text-right">
+                            Rp {Math.round(m.feedPriceKg).toLocaleString('id-ID')}
+                          </TableCell>
+                        )}
                         <TableCell className="text-right">{m.eggsKg}</TableCell>
                         <TableCell className="text-right">{m.eggsCount.toLocaleString()}</TableCell>
+                        {role === 'admin' && (
+                          <TableCell className="text-right">
+                            Rp {Math.round(m.eggsPriceKg).toLocaleString('id-ID')}
+                          </TableCell>
+                        )}
                         <TableCell className="text-right">{m.fcr}</TableCell>
                         <TableCell className="text-right">{m.hdpPercent}%</TableCell>
                         <TableCell>
                           <StatusBadge status={getHDPStatus(m.hdpPercent)} size="sm" />
                         </TableCell>
+                        {role === 'admin' && (
+                          <TableCell className="text-right">
+                            Rp {Math.round(m.hpp).toLocaleString('id-ID')}
+                          </TableCell>
+                        )}
                         <TableCell className="text-right">
                           <div className="flex gap-1 justify-end">
                             {m.recordingId && (
@@ -304,6 +327,16 @@ const RecordingsClient = () => {
                     ))}
                   </TableBody>
                 </Table>
+                {metrics.length > visibleRows && (
+                  <div className="mt-4 flex justify-center">
+                    <Button
+                      variant="outline"
+                      onClick={() => setVisibleRows((prev) => prev + 50)}
+                    >
+                      Muat lebih banyak
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>

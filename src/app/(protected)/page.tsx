@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { StatCard } from '@/components/common/StatCard';
@@ -9,22 +9,42 @@ import { PerformanceList } from '@/components/dashboard/PerformanceList';
 import { QuickAddRecording } from '@/components/dashboard/QuickAddRecording';
 import { reportService } from '@/lib/services/reportService';
 import { kandangService } from '@/lib/services/kandangService';
-import { Egg, Wheat, Skull, TrendingUp, Activity, Home } from 'lucide-react';
+import { Egg, Wheat, Skull, TrendingUp, Activity, Home, Coins, Receipt, Scale, Package, Loader2 } from 'lucide-react';
 import type { DashboardSummary, KandangStatus, Kandang } from '@/lib/mock/types';
 import Loading from './loading';
 import { signalNavigationDone } from '@/lib/ui/navigationProgress';
 import { useSession } from 'next-auth/react';
 import { EmptyState } from '@/components/common/EmptyState';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Filter } from 'lucide-react';
+import { recordingService } from '@/lib/services/recordingService';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const Dashboard = () => {
-  const today = format(new Date(), 'yyyy-MM-dd');
+  const today = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
   const { data: session } = useSession();
   const role = session?.user?.role;
+  const [selectedDate, setSelectedDate] = useState(today);
+  const [appliedDate, setAppliedDate] = useState(today);
+  const [latestDate, setLatestDate] = useState<string | null>(null);
+  const [showFilter, setShowFilter] = useState(false);
+  const [filterNonce, setFilterNonce] = useState(0);
+  const [hasManualFilter, setHasManualFilter] = useState(false);
+  const [isApplyingFilter, setIsApplyingFilter] = useState(false);
+  const [selectedKandangIds, setSelectedKandangIds] = useState<string[]>([]);
+  const [appliedKandangIds, setAppliedKandangIds] = useState<string[]>([]);
+  const [hasInitKandangFilter, setHasInitKandangFilter] = useState(false);
   const [summary, setSummary] = useState<DashboardSummary>({
     totalEggsKg: 0,
     totalEggsCount: 0,
+    totalFeedIn: 0,
     totalFeedUsed: 0,
     totalDeadChickens: 0,
+    totalEggsRevenue: 0,
+    totalFeedCost: 0,
+    totalHpp: 0,
     averageFCR: 0,
     averageHDP: 0,
     kandangCount: 0,
@@ -34,21 +54,133 @@ const Dashboard = () => {
   const [topPerformers, setTopPerformers] = useState<KandangStatus[]>([]);
   const [bottomPerformers, setBottomPerformers] = useState<KandangStatus[]>([]);
   const [kandangList, setKandangList] = useState<Kandang[]>([]);
+  const [kandangLoaded, setKandangLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const defaultKandangIds = useMemo(
+    () => kandangList.map((item) => item.id),
+    [kandangList]
+  );
+  const effectiveKandangIds = useMemo(
+    () => (appliedKandangIds.length ? appliedKandangIds : defaultKandangIds),
+    [appliedKandangIds, defaultKandangIds]
+  );
+  const hasNoAccess = role === 'staff' && kandangLoaded && kandangList.length === 0;
 
   useEffect(() => {
     let isMounted = true;
+    kandangService.getAll()
+      .then((data) => {
+        if (!isMounted) return;
+        setKandangList(data);
+      })
+      .catch(() => {
+        // Keep empty list on error.
+      })
+      .finally(() => {
+        if (isMounted) setKandangLoaded(true);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hasInitKandangFilter && kandangList.length > 0) {
+      setSelectedKandangIds(defaultKandangIds);
+      setAppliedKandangIds(defaultKandangIds);
+      setHasInitKandangFilter(true);
+    }
+  }, [defaultKandangIds, hasInitKandangFilter, kandangList.length]);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (hasNoAccess) {
+      setLatestDate(null);
+      return () => {
+        isMounted = false;
+      };
+    }
+    recordingService.getLatestDate(effectiveKandangIds.length ? effectiveKandangIds : undefined)
+      .then((date) => {
+        if (!isMounted) return;
+        setLatestDate(date);
+        if (!hasManualFilter && date && date !== today && appliedDate === today) {
+          setSelectedDate(date);
+          setAppliedDate(date);
+        }
+      })
+      .catch(() => {
+        // Keep default date on error.
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [appliedDate, effectiveKandangIds, hasNoAccess, today]);
+
+  const handleApplyFilter = async () => {
+    setIsApplyingFilter(true);
+    const nextIds = selectedKandangIds.length
+      ? selectedKandangIds
+      : defaultKandangIds;
+    const nextDate = selectedDate || today;
+    const allowFallback = !hasManualFilter;
+    setHasManualFilter(true);
+
+    try {
+      if (allowFallback && nextDate === today) {
+        try {
+          const latest = await recordingService.getLatestDate(nextIds);
+          if (latest && latest !== today) {
+            setLatestDate(latest);
+            setAppliedDate(latest);
+          } else {
+            setAppliedDate(nextDate);
+          }
+        } catch {
+          setAppliedDate(nextDate);
+        }
+      } else {
+        setAppliedDate(nextDate);
+      }
+    } finally {
+      setIsApplyingFilter(false);
+    }
+
+    setAppliedKandangIds(nextIds);
+    setFilterNonce((prev) => prev + 1);
+  };
+
+  const handleResetFilter = () => {
+    setSelectedKandangIds(defaultKandangIds);
+    setAppliedKandangIds(defaultKandangIds);
+    setSelectedDate(today);
+    setAppliedDate(today);
+  };
+
+  useEffect(() => {
+    if (!kandangLoaded) return;
+    if (hasNoAccess) {
+      setSummary((prev) => ({ ...prev }));
+      setKandangStatuses([]);
+      setTopPerformers([]);
+      setBottomPerformers([]);
+      setIsLoading(false);
+      signalNavigationDone();
+      return;
+    }
+
+    let isMounted = true;
+    setIsLoading(true);
 
     Promise.all([
-      kandangService.getAll(),
-      reportService.getDashboardSummary(today),
-      reportService.getKandangStatuses(today),
-      reportService.getTopPerformers(today, 3),
-      reportService.getBottomPerformers(today, 3),
+      reportService.getDashboardSummary(appliedDate, effectiveKandangIds),
+      reportService.getKandangStatuses(appliedDate, effectiveKandangIds),
+      reportService.getTopPerformers(appliedDate, 3, effectiveKandangIds),
+      reportService.getBottomPerformers(appliedDate, 3, effectiveKandangIds),
     ])
-      .then(([kandangData, summaryData, statuses, top, bottom]) => {
+      .then(([summaryData, statuses, top, bottom]) => {
         if (!isMounted) return;
-        setKandangList(kandangData);
         setSummary(summaryData);
         setKandangStatuses(statuses);
         setTopPerformers(top);
@@ -65,13 +197,13 @@ const Dashboard = () => {
     return () => {
       isMounted = false;
     };
-  }, [today]);
+  }, [appliedDate, effectiveKandangIds, filterNonce, hasNoAccess, kandangLoaded]);
 
   if (isLoading) {
     return <Loading />;
   }
 
-  if (role === 'staff' && kandangList.length === 0) {
+  if (hasNoAccess) {
     return (
       <AppLayout
         title="Dashboard"
@@ -88,14 +220,98 @@ const Dashboard = () => {
   return (
     <AppLayout 
       title="Dashboard" 
-      subtitle={`Ringkasan data ${format(new Date(), 'EEEE, dd MMMM yyyy')}`}
+      subtitle={`Ringkasan data ${format(new Date(appliedDate), 'EEEE, dd MMMM yyyy')}`}
     >
       <div className="space-y-6 animate-fade-in">
         {/* Quick Add */}
-        <QuickAddRecording />
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <QuickAddRecording />
+          <Button
+            variant="outline"
+            className="gap-2 bg-background"
+            onClick={() => setShowFilter((prev) => !prev)}
+          >
+            <Filter className="w-4 h-4" />
+            Filter By
+            <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+              {effectiveKandangIds.length} Kandang
+            </span>
+          </Button>
+        </div>
+
+        {showFilter && (
+          <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="space-y-2">
+                <Label>Tanggal</Label>
+                <Input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                />
+                {latestDate && latestDate !== appliedDate && (
+                  <p className="text-xs text-muted-foreground">
+                    Data terakhir tersedia: {format(new Date(latestDate), 'dd MMMM yyyy')}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label>Kandang</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <label className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm">
+                    <Checkbox
+                      checked={
+                        selectedKandangIds.length === kandangList.length && kandangList.length > 0
+                          ? true
+                          : selectedKandangIds.length > 0
+                            ? 'indeterminate'
+                            : false
+                      }
+                      onCheckedChange={(checked) => {
+                        if (checked === true) {
+                          setSelectedKandangIds(defaultKandangIds);
+                        } else {
+                          setSelectedKandangIds([]);
+                        }
+                      }}
+                    />
+                    Semua kandang
+                  </label>
+                  {kandangList.map((item) => (
+                    <label
+                      key={item.id}
+                      className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm"
+                    >
+                      <Checkbox
+                        checked={selectedKandangIds.includes(item.id)}
+                        onCheckedChange={() => {
+                          setSelectedKandangIds((prev) => {
+                            const next = prev.includes(item.id)
+                              ? prev.filter((id) => id !== item.id)
+                              : [...prev, item.id];
+                            return next;
+                          });
+                        }}
+                      />
+                      {item.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Button onClick={handleApplyFilter} disabled={isApplyingFilter}>
+                {isApplyingFilter ? <Loader2 className="h-4 w-4 animate-spin" /> : "Terapkan"}
+              </Button>
+              <Button variant="outline" onClick={handleResetFilter}>
+                Reset
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           <StatCard
             title="Total Telur"
             value={`${summary.totalEggsKg} kg`}
@@ -122,6 +338,18 @@ const Dashboard = () => {
             revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
             icon={Wheat}
             variant="secondary"
+          />
+          <StatCard
+            title="Pakan Masuk"
+            value={`${summary.totalFeedIn} kg`}
+            animatedNumber={summary.totalFeedIn}
+            animationDurationMs={2000}
+            valueSuffix=" kg"
+            valueFormatter={(value) => value.toFixed(1)}
+            revealDelayMs={140}
+            revealDurationMs={800}
+            revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
+            icon={Package}
           />
           <StatCard
             title="Ayam Mati"
@@ -173,6 +401,51 @@ const Dashboard = () => {
             revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
             icon={Home}
           />
+          {role === 'admin' && (
+            <StatCard
+              title="Revenue Telur"
+              value={`Rp ${summary.totalEggsRevenue.toLocaleString('id-ID')}`}
+              animatedNumber={summary.totalEggsRevenue}
+              animationDurationMs={2000}
+              valuePrefix="Rp "
+              valueFormatter={(value) => Math.round(value).toLocaleString('id-ID')}
+              revealDelayMs={440}
+              revealDurationMs={1040}
+              revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
+              icon={Coins}
+              valueClassName="text-xl"
+            />
+          )}
+          {role === 'admin' && (
+            <StatCard
+              title="Biaya Pakan"
+              value={`Rp ${summary.totalFeedCost.toLocaleString('id-ID')}`}
+              animatedNumber={summary.totalFeedCost}
+              animationDurationMs={2000}
+              valuePrefix="Rp "
+              valueFormatter={(value) => Math.round(value).toLocaleString('id-ID')}
+              revealDelayMs={480}
+              revealDurationMs={1080}
+              revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
+              icon={Receipt}
+              valueClassName="text-xl"
+            />
+          )}
+          {role === 'admin' && (
+            <StatCard
+              title="Total HPP"
+              value={`Rp ${summary.totalHpp.toLocaleString('id-ID')}`}
+              animatedNumber={summary.totalHpp}
+              animationDurationMs={2000}
+              valuePrefix="Rp "
+              valueFormatter={(value) => Math.round(value).toLocaleString('id-ID')}
+              revealDelayMs={520}
+              revealDurationMs={1120}
+              revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
+              icon={Scale}
+              valueClassName="text-xl"
+            />
+          )}
         </div>
 
         {/* Performance Lists */}

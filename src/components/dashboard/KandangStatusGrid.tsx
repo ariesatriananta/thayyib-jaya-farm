@@ -1,14 +1,20 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import type { KandangStatus } from '@/lib/mock/types';
-import { Home, Egg, TrendingUp } from 'lucide-react';
+import { Home, Egg, TrendingUp, Scale } from 'lucide-react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 
 interface KandangStatusGridProps {
   statuses: KandangStatus[];
 }
 
 export function KandangStatusGrid({ statuses }: KandangStatusGridProps) {
+  const { data: session } = useSession();
+  const role = session?.user?.role;
+
   if (statuses.length === 0) {
     return (
       <Card
@@ -71,6 +77,17 @@ export function KandangStatusGrid({ statuses }: KandangStatusGridProps) {
                     <span className="text-muted-foreground">FCR</span>
                     <span className="font-medium">{status.todayMetrics.fcr}</span>
                   </div>
+                  {role === 'admin' && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground flex items-center gap-1.5">
+                        <Scale className="w-3.5 h-3.5" />
+                        HPP
+                      </span>
+                      <span className="font-medium">
+                        Rp {Math.round(status.todayMetrics.hpp).toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Ayam Hidup</span>
                     <span className="font-medium">{status.todayMetrics.totalChickenToday.toLocaleString()}</span>

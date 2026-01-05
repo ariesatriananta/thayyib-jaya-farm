@@ -80,7 +80,9 @@ export function getRecordingByDateAndKandang(date: string, kandangId: string): R
   return recordingStore.find(r => r.date === date && r.kandangId === kandangId);
 }
 
-export function createRecording(data: Omit<Recording, 'id' | 'createdAt' | 'updatedAt' | 'feedUsedKg'>): Recording {
+export function createRecording(
+  data: Omit<Recording, 'id' | 'createdAt' | 'updatedAt' | 'feedUsedKg'>
+): Recording {
   const now = new Date().toISOString();
   const feedUsedKg = Math.max(0, data.feedInKg - data.feedRemainingKg);
   

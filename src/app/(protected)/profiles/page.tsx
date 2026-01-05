@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import type { UserItem } from "@/lib/services/userService";
 import { useSession } from "next-auth/react";
-import { Lock, User, Save } from "lucide-react";
+import { Lock, User, Save, Loader2 } from "lucide-react";
 
 const ProfilesPage = () => {
   const { data: session, update } = useSession();
@@ -220,8 +220,14 @@ const ProfilesPage = () => {
             </div>
             <div className="mt-6 flex justify-end">
               <Button onClick={handleUpdateName} disabled={isSaving} className="gap-2">
-                <Save className="h-4 w-4" />
-                {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    Simpan Perubahan
+                  </>
+                )}
               </Button>
             </div>
           </CardContent>
@@ -259,7 +265,7 @@ const ProfilesPage = () => {
             <Separator />
             <div className="flex justify-end">
               <Button variant="secondary" onClick={handleUpdatePassword} disabled={isUpdatingPassword}>
-                {isUpdatingPassword ? "Memperbarui..." : "Ganti Password"}
+                {isUpdatingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : "Ganti Password"}
               </Button>
             </div>
           </CardContent>

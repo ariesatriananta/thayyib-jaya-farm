@@ -11,16 +11,28 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const date = searchParams.get("date") || undefined;
   const limit = Number(searchParams.get("limit") || 3);
+  const kandangIdsParam = searchParams.get("kandangIds");
+  const requestedIds = kandangIdsParam
+    ? kandangIdsParam.split(",").map((id) => id.trim()).filter(Boolean)
+    : null;
+  const allowedIds = access.role === "staff" ? (access.kandangIds || []) : null;
+  const filteredIds = requestedIds
+    ? requestedIds.filter((id) => !allowedIds || allowedIds.includes(id))
+    : allowedIds;
 
   if (access.role === "staff" && (!access.kandangIds || access.kandangIds.length === 0)) {
     return NextResponse.json([]);
   }
 
-  const kandangRows = access.role === "staff"
-    ? await db.select().from(kandangTable).where(inArray(kandangTable.id, access.kandangIds!))
+  if (filteredIds && filteredIds.length === 0) {
+    return NextResponse.json([]);
+  }
+
+  const kandangRows = filteredIds
+    ? await db.select().from(kandangTable).where(inArray(kandangTable.id, filteredIds))
     : await db.select().from(kandangTable);
-  const recordingRows = access.role === "staff"
-    ? await db.select().from(recordings).where(inArray(recordings.kandangId, access.kandangIds!))
+  const recordingRows = filteredIds
+    ? await db.select().from(recordings).where(inArray(recordings.kandangId, filteredIds))
     : await db.select().from(recordings);
 
   const statuses = buildKandangStatuses(
