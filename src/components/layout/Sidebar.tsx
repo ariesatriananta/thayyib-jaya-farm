@@ -10,7 +10,8 @@ import {
   Settings,
   Menu,
   X,
-  Loader2
+  Loader2,
+  Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ const navigation = [
   { name: 'Pencatatan', href: '/recordings', icon: ClipboardList },
   { name: 'Kandang', href: '/kandang', icon: Home },
   { name: 'Laporan', href: '/reports', icon: BarChart3 },
+  { name: 'User', href: '/users', icon: Users },
   { name: 'Pengaturan', href: '/settings', icon: Settings },
 ];
 

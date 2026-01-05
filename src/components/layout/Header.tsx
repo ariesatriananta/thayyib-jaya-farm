@@ -1,12 +1,22 @@
 "use client";
 
-import { Moon, Sun, LogOut } from 'lucide-react';
+import { Moon, Sun, LogOut, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { settingsService } from '@/lib/services/settingsService';
 import type { Settings } from '@/lib/mock/types';
 import { signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 
 interface HeaderProps {
   title: string;
@@ -16,6 +26,7 @@ interface HeaderProps {
 export function Header({ title, subtitle }: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
+  const { data: session } = useSession();
   const [settings, setSettings] = useState<Settings>({
     defaultTargetHDPPercent: 90,
     defaultTargetFCR: 2.2,
@@ -50,6 +61,14 @@ export function Header({ title, subtitle }: HeaderProps) {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
+  const displayName = session?.user?.name || session?.user?.username || 'User';
+  const initials = displayName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || 'U';
+
   return (
     <header className="gradient-header border-b border-border px-6 py-4 lg:px-8">
       <div className="flex items-center justify-between">
@@ -75,19 +94,37 @@ export function Header({ title, subtitle }: HeaderProps) {
             )}
           </Button>
           
-          <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-border">
-            <div className="text-right">
-              <p className="text-sm font-medium">Admin</p>
-              <p className="text-xs text-muted-foreground">{settings.farmName}</p>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => signOut({ callbackUrl: '/login' })}
-            >
-              <LogOut className="h-5 w-5" />
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="relative h-9 w-9 rounded-full border border-border/60 bg-card/80 shadow-sm"
+              >
+                <span className="text-sm font-semibold text-foreground">{initials}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="space-y-1">
+                <div className="text-sm font-semibold">{displayName}</div>
+                <div className="text-xs text-muted-foreground">{settings.farmName}</div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/profiles" className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  MyProfile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => signOut({ callbackUrl: '/login' })}
+                className="text-destructive focus:text-destructive"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

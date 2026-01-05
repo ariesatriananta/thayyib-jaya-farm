@@ -24,7 +24,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!pathname.startsWith("/api") && token.role === "staff") {
-    const blockedPaths = ["/kandang", "/settings"];
+    const blockedPaths = ["/kandang", "/settings", "/users"];
     const isBlocked = blockedPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
     if (isBlocked) {
       return NextResponse.redirect(new URL("/", request.url));
