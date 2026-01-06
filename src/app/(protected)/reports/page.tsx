@@ -66,6 +66,7 @@ const Reports = () => {
     feedCost: number;
     eggsRevenue: number;
     hpp: number;
+    nilaiHpp: number;
   }[]>([]);
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
   const [kandangLoaded, setKandangLoaded] = useState(false);
@@ -354,7 +355,7 @@ const Reports = () => {
                   <CardHeader>
                     <CardTitle className="text-base flex items-center gap-2">
                       <BarChart3 className="w-5 h-5" />
-                      Tren HPP & Harga
+                      Tren Profit & Harga
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -367,7 +368,8 @@ const Reports = () => {
                             tickFormatter={(value) => format(new Date(value), 'dd/MM')}
                             className="text-xs"
                           />
-                          <YAxis className="text-xs" />
+                          <YAxis yAxisId="left" className="text-xs" />
+                          <YAxis yAxisId="right" orientation="right" className="text-xs" />
                           <Tooltip
                             labelFormatter={(value) => format(new Date(value), 'dd MMM yyyy')}
                             formatter={(value: number, name) => [
@@ -386,6 +388,7 @@ const Reports = () => {
                             dataKey="eggsRevenue"
                             name="Total Harga Telur"
                             stroke="hsl(var(--chart-1))"
+                            yAxisId="left"
                             strokeWidth={2}
                             dot={false}
                           />
@@ -394,16 +397,28 @@ const Reports = () => {
                             dataKey="feedCost"
                             name="Total Harga Pakan"
                             stroke="hsl(var(--chart-2))"
+                            yAxisId="left"
                             strokeWidth={2}
                             dot={false}
                           />
                           <Line
                             type="monotone"
                             dataKey="hpp"
-                            name="HPP"
+                            name="Profit"
                             stroke="hsl(var(--chart-3))"
+                            yAxisId="left"
                             strokeWidth={2}
                             dot={{ r: 2 }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="nilaiHpp"
+                            name="Nilai HPP"
+                            stroke="hsl(var(--chart-4))"
+                            yAxisId="right"
+                            strokeWidth={2}
+                            strokeDasharray="6 4"
+                            dot={false}
                           />
                         </LineChart>
                       </ResponsiveContainer>
@@ -457,7 +472,12 @@ const Reports = () => {
                           baseRow["Status"] = getHDPStatus(m.hdpPercent);
 
                           if (isAdmin) {
-                            baseRow["HPP"] = Math.round(m.hpp);
+                            baseRow["HPP"] = Math.round(
+                              m.eggsKg > 0
+                                ? (m.feedInKg * m.feedPriceKg) / m.eggsKg
+                                : 0
+                            );
+                            baseRow["Profit"] = Math.round(m.hpp);
                           }
 
                           baseRow["Keterangan"] = m.notes || "-";
@@ -512,6 +532,7 @@ const Reports = () => {
                           <TableHead className="text-right">HDP%</TableHead>
                           <TableHead>Status</TableHead>
                           {isAdmin && <TableHead className="text-right">HPP</TableHead>}
+                          {isAdmin && <TableHead className="text-right">Profit</TableHead>}
                           <TableHead>Keterangan</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -546,6 +567,15 @@ const Reports = () => {
                             <TableCell>
                               <StatusBadge status={getHDPStatus(m.hdpPercent)} size="sm" />
                             </TableCell>
+                            {isAdmin && (
+                              <TableCell className="text-right">
+                                Rp {Math.round(
+                                  m.eggsKg > 0
+                                    ? (m.feedInKg * m.feedPriceKg) / m.eggsKg
+                                    : 0
+                                ).toLocaleString('id-ID')}
+                              </TableCell>
+                            )}
                             {isAdmin && (
                               <TableCell className="text-right">
                                 Rp {m.hpp.toLocaleString('id-ID')}

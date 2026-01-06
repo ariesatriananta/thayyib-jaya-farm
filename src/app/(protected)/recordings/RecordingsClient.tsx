@@ -253,6 +253,7 @@ const RecordingsClient = () => {
                       <TableHead className="text-right">HDP%</TableHead>
                       <TableHead>Status</TableHead>
                       {role === 'admin' && <TableHead className="text-right">HPP</TableHead>}
+                      {role === 'admin' && <TableHead className="text-right">Profit</TableHead>}
                       <TableHead className="text-right">Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -284,6 +285,15 @@ const RecordingsClient = () => {
                         <TableCell>
                           <StatusBadge status={getHDPStatus(m.hdpPercent)} size="sm" />
                         </TableCell>
+                        {role === 'admin' && (
+                          <TableCell className="text-right">
+                            Rp {Math.round(
+                              m.eggsKg > 0
+                                ? (m.feedInKg * m.feedPriceKg) / m.eggsKg
+                                : 0
+                            ).toLocaleString('id-ID')}
+                          </TableCell>
+                        )}
                         {role === 'admin' && (
                           <TableCell className="text-right">
                             Rp {Math.round(m.hpp).toLocaleString('id-ID')}

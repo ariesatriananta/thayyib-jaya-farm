@@ -106,6 +106,7 @@ export function buildReportData(
     feedCost: number;
     eggsRevenue: number;
     hpp: number;
+    nilaiHpp: number;
   }[];
   ranking: RankingEntry[];
 } {
@@ -133,6 +134,7 @@ export function buildReportData(
     hdpPercents: number[];
     feedCost: number;
     eggsRevenue: number;
+    eggsCount: number;
   }>();
   for (const metric of dailyMetrics) {
     const existing = dateMap.get(metric.date) || {
@@ -142,6 +144,7 @@ export function buildReportData(
       hdpPercents: [],
       feedCost: 0,
       eggsRevenue: 0,
+      eggsCount: 0,
     };
     existing.eggsKg += metric.eggsKg;
     existing.feedInKg += metric.feedInKg;
@@ -149,6 +152,7 @@ export function buildReportData(
     existing.hdpPercents.push(metric.hdpPercent);
     existing.feedCost += metric.feedCost;
     existing.eggsRevenue += metric.eggsRevenue;
+    existing.eggsCount += metric.eggsCount;
     dateMap.set(metric.date, existing);
   }
 
@@ -164,6 +168,7 @@ export function buildReportData(
       feedCost: Number(data.feedCost.toFixed(0)),
       eggsRevenue: Number(data.eggsRevenue.toFixed(0)),
       hpp: Number((data.eggsRevenue - data.feedCost).toFixed(0)),
+      nilaiHpp: data.eggsKg > 0 ? Number((data.feedCost / data.eggsKg).toFixed(0)) : 0,
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 

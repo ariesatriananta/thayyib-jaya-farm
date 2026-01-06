@@ -9,7 +9,7 @@ import { PerformanceList } from '@/components/dashboard/PerformanceList';
 import { QuickAddRecording } from '@/components/dashboard/QuickAddRecording';
 import { reportService } from '@/lib/services/reportService';
 import { kandangService } from '@/lib/services/kandangService';
-import { Egg, Wheat, Skull, TrendingUp, Activity, Home, Coins, Receipt, Scale, Package, Loader2 } from 'lucide-react';
+import { Egg, Wheat, Skull, TrendingUp, Activity, Coins, Receipt, BadgeDollarSign, Package, Loader2, Calculator } from 'lucide-react';
 import type { DashboardSummary, KandangStatus, Kandang } from '@/lib/mock/types';
 import Loading from './loading';
 import { signalNavigationDone } from '@/lib/ui/navigationProgress';
@@ -56,6 +56,9 @@ const Dashboard = () => {
   const [kandangList, setKandangList] = useState<Kandang[]>([]);
   const [kandangLoaded, setKandangLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const nilaiHpp = summary.totalEggsKg > 0
+    ? Math.round(summary.totalFeedCost / summary.totalEggsKg)
+    : 0;
   const defaultKandangIds = useMemo(
     () => kandangList.map((item) => item.id),
     [kandangList]
@@ -389,18 +392,6 @@ const Dashboard = () => {
             icon={TrendingUp}
             variant={summary.averageHDP >= 85 ? 'primary' : summary.averageHDP >= 75 ? 'warning' : 'danger'}
           />
-          <StatCard
-            title="Kandang Aktif"
-            value={`${summary.activeKandangCount}/${summary.kandangCount}`}
-            animatedNumber={summary.activeKandangCount}
-            animationDurationMs={2000}
-            valueSuffix={`/${summary.kandangCount}`}
-            valueFormatter={(value) => Math.round(value).toLocaleString('id-ID')}
-            revealDelayMs={400}
-            revealDurationMs={1000}
-            revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
-            icon={Home}
-          />
           {role === 'admin' && (
             <StatCard
               title="Revenue Telur"
@@ -433,7 +424,7 @@ const Dashboard = () => {
           )}
           {role === 'admin' && (
             <StatCard
-              title="Total HPP"
+              title="Total Profit"
               value={`Rp ${summary.totalHpp.toLocaleString('id-ID')}`}
               animatedNumber={summary.totalHpp}
               animationDurationMs={2000}
@@ -442,7 +433,22 @@ const Dashboard = () => {
               revealDelayMs={520}
               revealDurationMs={1120}
               revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
-              icon={Scale}
+              icon={BadgeDollarSign}
+              valueClassName="text-xl"
+            />
+          )}
+          {role === 'admin' && (
+            <StatCard
+              title="Nilai HPP"
+              value={`Rp ${nilaiHpp.toLocaleString('id-ID')}`}
+              animatedNumber={nilaiHpp}
+              animationDurationMs={2000}
+              valuePrefix="Rp "
+              valueFormatter={(value) => Math.round(value).toLocaleString('id-ID')}
+              revealDelayMs={560}
+              revealDurationMs={1160}
+              revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
+              icon={Calculator}
               valueClassName="text-xl"
             />
           )}

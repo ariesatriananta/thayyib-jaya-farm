@@ -51,6 +51,7 @@ export const reportService = {
       feedCost: number;
       eggsRevenue: number;
       hpp: number;
+      nilaiHpp: number;
     }[];
     ranking: RankingEntry[];
   }> {
@@ -73,6 +74,7 @@ export const reportService = {
         feedCost: number;
         eggsRevenue: number;
         hpp: number;
+        nilaiHpp: number;
       }[];
       ranking: RankingEntry[];
     }>(`/api/reports?${params.toString()}`);

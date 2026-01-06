@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import type { KandangStatus } from '@/lib/mock/types';
-import { Home, Egg, TrendingUp, Scale } from 'lucide-react';
+import { Home, Egg, TrendingUp, BadgeDollarSign, Calculator } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 
@@ -80,11 +80,26 @@ export function KandangStatusGrid({ statuses }: KandangStatusGridProps) {
                   {role === 'admin' && (
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground flex items-center gap-1.5">
-                        <Scale className="w-3.5 h-3.5" />
-                        HPP
+                        <BadgeDollarSign className="w-3.5 h-3.5" />
+                        Profit
                       </span>
                       <span className="font-medium">
                         Rp {Math.round(status.todayMetrics.hpp).toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                  )}
+                  {role === 'admin' && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground flex items-center gap-1.5">
+                        <Calculator className="w-3.5 h-3.5" />
+                        Nilai HPP
+                      </span>
+                      <span className="font-medium">
+                        Rp {Math.round(
+                          status.todayMetrics.eggsKg > 0
+                            ? (status.todayMetrics.feedInKg * status.todayMetrics.feedPriceKg) / status.todayMetrics.eggsKg
+                            : 0
+                        ).toLocaleString('id-ID')}
                       </span>
                     </div>
                   )}
