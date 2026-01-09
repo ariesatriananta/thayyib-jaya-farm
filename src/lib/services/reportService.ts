@@ -8,33 +8,71 @@ import type {
 import { fetchJson } from './apiClient';
 
 export const reportService = {
-  async getDashboardSummary(date?: string, kandangIds?: string[]): Promise<DashboardSummary> {
+  async getDashboardSummary(
+    startDate?: string,
+    endDate?: string,
+    kandangIds?: string[]
+  ): Promise<DashboardSummary> {
     const params = new URLSearchParams();
-    if (date) params.set('date', date);
+    if (startDate && endDate) {
+      params.set('startDate', startDate);
+      params.set('endDate', endDate);
+    } else if (startDate) {
+      params.set('date', startDate);
+    }
     if (kandangIds && kandangIds.length > 0) params.set('kandangIds', kandangIds.join(','));
     const query = params.toString();
     return fetchJson<DashboardSummary>(`/api/reports/summary${query ? `?${query}` : ''}`);
   },
 
-  async getKandangStatuses(date?: string, kandangIds?: string[]): Promise<KandangStatus[]> {
+  async getKandangStatuses(
+    startDate?: string,
+    endDate?: string,
+    kandangIds?: string[]
+  ): Promise<KandangStatus[]> {
     const params = new URLSearchParams();
-    if (date) params.set('date', date);
+    if (startDate && endDate) {
+      params.set('startDate', startDate);
+      params.set('endDate', endDate);
+    } else if (startDate) {
+      params.set('date', startDate);
+    }
     if (kandangIds && kandangIds.length > 0) params.set('kandangIds', kandangIds.join(','));
     const query = params.toString();
     return fetchJson<KandangStatus[]>(`/api/reports/statuses${query ? `?${query}` : ''}`);
   },
 
-  async getTopPerformers(date?: string, limit: number = 3, kandangIds?: string[]): Promise<KandangStatus[]> {
+  async getTopPerformers(
+    startDate?: string,
+    endDate?: string,
+    limit: number = 3,
+    kandangIds?: string[]
+  ): Promise<KandangStatus[]> {
     const params = new URLSearchParams();
-    if (date) params.set('date', date);
+    if (startDate && endDate) {
+      params.set('startDate', startDate);
+      params.set('endDate', endDate);
+    } else if (startDate) {
+      params.set('date', startDate);
+    }
     params.set('limit', limit.toString());
     if (kandangIds && kandangIds.length > 0) params.set('kandangIds', kandangIds.join(','));
     return fetchJson<KandangStatus[]>(`/api/reports/top?${params.toString()}`);
   },
 
-  async getBottomPerformers(date?: string, limit: number = 3, kandangIds?: string[]): Promise<KandangStatus[]> {
+  async getBottomPerformers(
+    startDate?: string,
+    endDate?: string,
+    limit: number = 3,
+    kandangIds?: string[]
+  ): Promise<KandangStatus[]> {
     const params = new URLSearchParams();
-    if (date) params.set('date', date);
+    if (startDate && endDate) {
+      params.set('startDate', startDate);
+      params.set('endDate', endDate);
+    } else if (startDate) {
+      params.set('date', startDate);
+    }
     params.set('limit', limit.toString());
     if (kandangIds && kandangIds.length > 0) params.set('kandangIds', kandangIds.join(','));
     return fetchJson<KandangStatus[]>(`/api/reports/bottom?${params.toString()}`);

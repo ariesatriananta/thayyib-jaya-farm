@@ -26,8 +26,10 @@ const Dashboard = () => {
   const today = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
   const { data: session } = useSession();
   const role = session?.user?.role;
-  const [selectedDate, setSelectedDate] = useState(today);
-  const [appliedDate, setAppliedDate] = useState(today);
+  const [selectedStartDate, setSelectedStartDate] = useState(today);
+  const [selectedEndDate, setSelectedEndDate] = useState(today);
+  const [appliedStartDate, setAppliedStartDate] = useState(today);
+  const [appliedEndDate, setAppliedEndDate] = useState(today);
   const [latestDate, setLatestDate] = useState<string | null>(null);
   const [showFilter, setShowFilter] = useState(false);
   const [filterNonce, setFilterNonce] = useState(0);
@@ -68,6 +70,12 @@ const Dashboard = () => {
     [appliedKandangIds, defaultKandangIds]
   );
   const hasNoAccess = role === 'staff' && kandangLoaded && kandangList.length === 0;
+  const periodLabel = useMemo(() => {
+    if (appliedStartDate === appliedEndDate) {
+      return `Periode ${format(new Date(appliedStartDate), 'dd MMM yyyy')}`;
+    }
+    return `Periode ${format(new Date(appliedStartDate), 'dd MMM yyyy')} - ${format(new Date(appliedEndDate), 'dd MMM yyyy')}`;
+  }, [appliedEndDate, appliedStartDate]);
 
   useEffect(() => {
     let isMounted = true;
@@ -108,9 +116,11 @@ const Dashboard = () => {
       .then((date) => {
         if (!isMounted) return;
         setLatestDate(date);
-        if (!hasManualFilter && date && date !== today && appliedDate === today) {
-          setSelectedDate(date);
-          setAppliedDate(date);
+        if (!hasManualFilter && date && date !== today && appliedStartDate === today && appliedEndDate === today) {
+          setSelectedStartDate(date);
+          setSelectedEndDate(date);
+          setAppliedStartDate(date);
+          setAppliedEndDate(date);
         }
       })
       .catch(() => {
@@ -119,32 +129,43 @@ const Dashboard = () => {
     return () => {
       isMounted = false;
     };
-  }, [appliedDate, effectiveKandangIds, hasNoAccess, today]);
+  }, [appliedEndDate, appliedStartDate, effectiveKandangIds, hasNoAccess, today]);
 
   const handleApplyFilter = async () => {
     setIsApplyingFilter(true);
     const nextIds = selectedKandangIds.length
       ? selectedKandangIds
       : defaultKandangIds;
-    const nextDate = selectedDate || today;
+    let nextStartDate = selectedStartDate || today;
+    let nextEndDate = selectedEndDate || today;
+    if (nextStartDate > nextEndDate) {
+      nextEndDate = nextStartDate;
+      setSelectedEndDate(nextStartDate);
+    }
     const allowFallback = !hasManualFilter;
     setHasManualFilter(true);
 
     try {
-      if (allowFallback && nextDate === today) {
+      if (allowFallback && nextStartDate === today && nextEndDate === today) {
         try {
           const latest = await recordingService.getLatestDate(nextIds);
           if (latest && latest !== today) {
             setLatestDate(latest);
-            setAppliedDate(latest);
+            setSelectedStartDate(latest);
+            setSelectedEndDate(latest);
+            setAppliedStartDate(latest);
+            setAppliedEndDate(latest);
           } else {
-            setAppliedDate(nextDate);
+            setAppliedStartDate(nextStartDate);
+            setAppliedEndDate(nextEndDate);
           }
         } catch {
-          setAppliedDate(nextDate);
+          setAppliedStartDate(nextStartDate);
+          setAppliedEndDate(nextEndDate);
         }
       } else {
-        setAppliedDate(nextDate);
+        setAppliedStartDate(nextStartDate);
+        setAppliedEndDate(nextEndDate);
       }
     } finally {
       setIsApplyingFilter(false);
@@ -157,8 +178,10 @@ const Dashboard = () => {
   const handleResetFilter = () => {
     setSelectedKandangIds(defaultKandangIds);
     setAppliedKandangIds(defaultKandangIds);
-    setSelectedDate(today);
-    setAppliedDate(today);
+    setSelectedStartDate(today);
+    setSelectedEndDate(today);
+    setAppliedStartDate(today);
+    setAppliedEndDate(today);
   };
 
   useEffect(() => {
@@ -177,10 +200,10 @@ const Dashboard = () => {
     setIsLoading(true);
 
     Promise.all([
-      reportService.getDashboardSummary(appliedDate, effectiveKandangIds),
-      reportService.getKandangStatuses(appliedDate, effectiveKandangIds),
-      reportService.getTopPerformers(appliedDate, 3, effectiveKandangIds),
-      reportService.getBottomPerformers(appliedDate, 3, effectiveKandangIds),
+      reportService.getDashboardSummary(appliedStartDate, appliedEndDate, effectiveKandangIds),
+      reportService.getKandangStatuses(appliedStartDate, appliedEndDate, effectiveKandangIds),
+      reportService.getTopPerformers(appliedStartDate, appliedEndDate, 3, effectiveKandangIds),
+      reportService.getBottomPerformers(appliedStartDate, appliedEndDate, 3, effectiveKandangIds),
     ])
       .then(([summaryData, statuses, top, bottom]) => {
         if (!isMounted) return;
@@ -200,7 +223,7 @@ const Dashboard = () => {
     return () => {
       isMounted = false;
     };
-  }, [appliedDate, effectiveKandangIds, filterNonce, hasNoAccess, kandangLoaded]);
+  }, [appliedEndDate, appliedStartDate, effectiveKandangIds, filterNonce, hasNoAccess, kandangLoaded]);
 
   if (isLoading) {
     return <Loading />;
@@ -223,7 +246,11 @@ const Dashboard = () => {
   return (
     <AppLayout 
       title="Dashboard" 
-      subtitle={`Ringkasan data ${format(new Date(appliedDate), 'EEEE, dd MMMM yyyy')}`}
+      subtitle={
+        appliedStartDate === appliedEndDate
+          ? `Ringkasan data ${format(new Date(appliedStartDate), 'EEEE, dd MMMM yyyy')}`
+          : `Ringkasan data ${format(new Date(appliedStartDate), 'dd MMM yyyy')} - ${format(new Date(appliedEndDate), 'dd MMM yyyy')}`
+      }
     >
       <div className="space-y-6 animate-fade-in">
         {/* Quick Add */}
@@ -247,12 +274,25 @@ const Dashboard = () => {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div className="space-y-2">
                 <Label>Tanggal</Label>
-                <Input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                />
-                {latestDate && latestDate !== appliedDate && (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Dari</Label>
+                    <Input
+                      type="date"
+                      value={selectedStartDate}
+                      onChange={(e) => setSelectedStartDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Sampai</Label>
+                    <Input
+                      type="date"
+                      value={selectedEndDate}
+                      onChange={(e) => setSelectedEndDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+                {latestDate && (selectedStartDate !== latestDate || selectedEndDate !== latestDate) && (
                   <p className="text-xs text-muted-foreground">
                     Data terakhir tersedia: {format(new Date(latestDate), 'dd MMMM yyyy')}
                   </p>
@@ -314,6 +354,12 @@ const Dashboard = () => {
         )}
 
         {/* Summary Cards */}
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <span>Ringkasan</span>
+          <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+            {periodLabel}
+          </span>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           <StatCard
             title="Total Telur"
@@ -460,17 +506,24 @@ const Dashboard = () => {
             title="Top 3 Kandang (HDP Tertinggi)"
             statuses={topPerformers}
             variant="top"
+            periodLabel={periodLabel}
           />
           <PerformanceList
             title="3 Kandang Perlu Perhatian"
             statuses={bottomPerformers}
             variant="bottom"
+            periodLabel={periodLabel}
           />
         </div>
 
         {/* Kandang Status Grid */}
         <div>
-          <h2 className="text-lg font-semibold mb-4">Status Semua Kandang</h2>
+          <div className="mb-4 flex items-center gap-2">
+            <h2 className="text-lg font-semibold">Status Semua Kandang</h2>
+            <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+              {periodLabel}
+            </span>
+          </div>
           <KandangStatusGrid statuses={kandangStatuses} />
         </div>
       </div>

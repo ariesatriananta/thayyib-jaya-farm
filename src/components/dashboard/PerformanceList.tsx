@@ -7,9 +7,10 @@ interface PerformanceListProps {
   title: string;
   statuses: KandangStatus[];
   variant: 'top' | 'bottom';
+  periodLabel?: string;
 }
 
-export function PerformanceList({ title, statuses, variant }: PerformanceListProps) {
+export function PerformanceList({ title, statuses, variant, periodLabel }: PerformanceListProps) {
   const Icon = variant === 'top' ? Trophy : AlertTriangle;
   const iconClass = variant === 'top' ? 'text-success' : 'text-destructive';
   const easing = variant === 'top'
@@ -24,6 +25,11 @@ export function PerformanceList({ title, statuses, variant }: PerformanceListPro
         <div className="flex items-center gap-2">
           <Icon className={`w-5 h-5 ${iconClass}`} />
           <CardTitle className="text-base">{title}</CardTitle>
+          {periodLabel && (
+            <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+              {periodLabel}
+            </span>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -36,7 +42,7 @@ export function PerformanceList({ title, statuses, variant }: PerformanceListPro
               animationFillMode: "both",
             }}
           >
-            Tidak ada data
+            Tidak ada data periode
           </p>
         ) : (
           statuses.map((status, index) => (
@@ -57,7 +63,7 @@ export function PerformanceList({ title, statuses, variant }: PerformanceListPro
                 <div>
                   <p className="font-medium text-sm">{status.kandang.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {status.todayMetrics?.eggsCount.toLocaleString()} butir
+                    Total {status.todayMetrics?.eggsCount.toLocaleString()} butir
                   </p>
                 </div>
               </div>

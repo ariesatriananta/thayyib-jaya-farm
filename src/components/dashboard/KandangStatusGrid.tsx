@@ -62,14 +62,14 @@ export function KandangStatusGrid({ statuses }: KandangStatusGridProps) {
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground flex items-center gap-1.5">
                       <TrendingUp className="w-3.5 h-3.5" />
-                      HDP
+                      HDP rata-rata
                     </span>
                     <span className="font-semibold">{status.todayMetrics.hdpPercent}%</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground flex items-center gap-1.5">
                       <Egg className="w-3.5 h-3.5" />
-                      Telur
+                      Total Telur
                     </span>
                     <span className="font-medium">{status.todayMetrics.eggsKg} kg</span>
                   </div>
@@ -104,13 +104,13 @@ export function KandangStatusGrid({ statuses }: KandangStatusGridProps) {
                     </div>
                   )}
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Ayam Hidup</span>
+                    <span className="text-muted-foreground">Ayam Hidup (akhir)</span>
                     <span className="font-medium">{status.todayMetrics.totalChickenToday.toLocaleString()}</span>
                   </div>
                 </div>
               ) : (
                 <div className="py-4 text-center text-sm text-muted-foreground">
-                  Belum ada data hari ini
+                  Belum ada data pada periode ini
                 </div>
               )}
             </CardContent>

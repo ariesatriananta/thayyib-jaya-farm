@@ -10,6 +10,9 @@ export async function GET(request: Request) {
   const access = await getAccessContext();
   const { searchParams } = new URL(request.url);
   const date = searchParams.get("date") || undefined;
+  const startDate = searchParams.get("startDate") || undefined;
+  const endDate = searchParams.get("endDate") || undefined;
+  const filters = startDate && endDate ? { startDate, endDate } : { date };
   const limit = Number(searchParams.get("limit") || 3);
   const kandangIdsParam = searchParams.get("kandangIds");
   const requestedIds = kandangIdsParam
@@ -38,7 +41,7 @@ export async function GET(request: Request) {
   const statuses = buildKandangStatuses(
     kandangRows.map(mapKandang),
     recordingRows.map(mapRecording),
-    date
+    filters
   );
 
   return NextResponse.json(buildTopPerformers(statuses, limit));

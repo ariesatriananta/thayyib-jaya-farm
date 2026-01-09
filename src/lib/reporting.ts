@@ -8,19 +8,126 @@ import type {
   Kandang,
   Recording,
 } from "@/lib/mock/types";
-import { buildDailyMetrics, calculateAverages, getHDPStatus } from "@/lib/mock/calculations";
+import {
+  buildDailyMetrics,
+  calculateAverages,
+  getDayName,
+  getHDPStatus,
+  getMonthLabel,
+  getTotalChickenToday,
+  getWeekNumber,
+} from "@/lib/mock/calculations";
+
+type DateRangeFilter = {
+  date?: string;
+  startDate?: string;
+  endDate?: string;
+};
+
+function resolveDateRange(filters?: DateRangeFilter): { startDate: string; endDate: string } {
+  const today = format(new Date(), "yyyy-MM-dd");
+  if (!filters) {
+    return { startDate: today, endDate: today };
+  }
+
+  if (filters.startDate && filters.endDate) {
+    return { startDate: filters.startDate, endDate: filters.endDate };
+  }
+
+  const date = filters.date || today;
+  return { startDate: date, endDate: date };
+}
+
+function buildPeriodMetrics(
+  kandang: Kandang,
+  metrics: DailyMetrics[],
+  allRecordings: Recording[]
+): DailyMetrics | null {
+  if (metrics.length === 0) return null;
+
+  const sorted = [...metrics].sort((a, b) => a.date.localeCompare(b.date));
+  const lastMetric = sorted[sorted.length - 1];
+
+  const totals = metrics.reduce(
+    (acc, metric) => {
+      acc.feedInKg += metric.feedInKg;
+      acc.feedUsedKg += metric.feedUsedKg;
+      acc.feedRemainingKg = metric.feedRemainingKg;
+      acc.eggsKg += metric.eggsKg;
+      acc.eggsCount += metric.eggsCount;
+      acc.deadChickenCount += metric.deadChickenCount;
+      acc.feedCost += metric.feedCost;
+      acc.eggsRevenue += metric.eggsRevenue;
+      return acc;
+    },
+    {
+      feedInKg: 0,
+      feedUsedKg: 0,
+      feedRemainingKg: 0,
+      eggsKg: 0,
+      eggsCount: 0,
+      deadChickenCount: 0,
+      feedCost: 0,
+      eggsRevenue: 0,
+    }
+  );
+
+  const validFcrs = metrics.filter((m) => m.fcr > 0).map((m) => m.fcr);
+  const validHdps = metrics.filter((m) => m.hdpPercent > 0).map((m) => m.hdpPercent);
+  const averageFcr = validFcrs.length
+    ? Number((validFcrs.reduce((sum, value) => sum + value, 0) / validFcrs.length).toFixed(2))
+    : 0;
+  const averageHdp = validHdps.length
+    ? Number((validHdps.reduce((sum, value) => sum + value, 0) / validHdps.length).toFixed(2))
+    : 0;
+
+  const totalChickenToday = getTotalChickenToday(kandang, allRecordings, lastMetric.date);
+  const feedPriceKg = totals.feedInKg > 0 ? totals.feedCost / totals.feedInKg : 0;
+  const eggsPriceKg = totals.eggsKg > 0 ? totals.eggsRevenue / totals.eggsKg : 0;
+  const hpp = totals.eggsRevenue - totals.feedCost;
+  const dateObj = new Date(lastMetric.date);
+
+  return {
+    date: lastMetric.date,
+    recordingId: lastMetric.recordingId,
+    kandangId: kandang.id,
+    kandangName: kandang.name,
+    totalChickenToday,
+    feedInKg: Number(totals.feedInKg.toFixed(1)),
+    feedPriceKg: Number(feedPriceKg.toFixed(2)),
+    feedRemainingKg: Number(totals.feedRemainingKg.toFixed(1)),
+    feedUsedKg: Number(totals.feedUsedKg.toFixed(1)),
+    eggsKg: Number(totals.eggsKg.toFixed(1)),
+    eggsPriceKg: Number(eggsPriceKg.toFixed(2)),
+    eggsCount: totals.eggsCount,
+    deadChickenCount: totals.deadChickenCount,
+    feedCost: Number(totals.feedCost.toFixed(2)),
+    eggsRevenue: Number(totals.eggsRevenue.toFixed(2)),
+    hpp: Number(hpp.toFixed(2)),
+    fcr: averageFcr,
+    hdpPercent: averageHdp,
+    weekNumber: getWeekNumber(dateObj),
+    monthLabel: getMonthLabel(dateObj),
+    dayName: getDayName(dateObj),
+    notes: "",
+    createdAt: lastMetric.createdAt,
+    updatedAt: lastMetric.updatedAt,
+  };
+}
 
 export function buildDashboardSummary(
   kandangList: Kandang[],
   allRecordings: Recording[],
-  date?: string
+  filters?: DateRangeFilter
 ): DashboardSummary {
-  const targetDate = date || format(new Date(), "yyyy-MM-dd");
-  const todayRecordings = allRecordings.filter((r) => r.date === targetDate);
+  const { startDate, endDate } = resolveDateRange(filters);
+  const rangeRecordings = allRecordings.filter(
+    (r) => r.date >= startDate && r.date <= endDate
+  );
   const activeKandang = kandangList.filter((k) => k.status === "active");
 
   const metrics: DailyMetrics[] = [];
-  for (const recording of todayRecordings) {
+  for (const recording of rangeRecordings) {
     const kandang = kandangList.find((k) => k.id === recording.kandangId);
     if (kandang) {
       metrics.push(buildDailyMetrics(recording, kandang, allRecordings));
@@ -51,22 +158,27 @@ export function buildDashboardSummary(
 export function buildKandangStatuses(
   kandangList: Kandang[],
   allRecordings: Recording[],
-  date?: string
+  filters?: DateRangeFilter
 ): KandangStatus[] {
-  const targetDate = date || format(new Date(), "yyyy-MM-dd");
+  const { startDate, endDate } = resolveDateRange(filters);
   const activeKandang = kandangList.filter((k) => k.status === "active");
 
   return activeKandang.map((kandang) => {
-    const todayRecording = allRecordings.find(
-      (r) => r.kandangId === kandang.id && r.date === targetDate
+    const kandangRecordings = allRecordings.filter(
+      (r) => r.kandangId === kandang.id && r.date >= startDate && r.date <= endDate
     );
 
     let todayMetrics: DailyMetrics | null = null;
     let hdpStatus: "excellent" | "good" | "warning" | "danger" = "warning";
 
-    if (todayRecording) {
-      todayMetrics = buildDailyMetrics(todayRecording, kandang, allRecordings);
-      hdpStatus = getHDPStatus(todayMetrics.hdpPercent);
+    if (kandangRecordings.length > 0) {
+      const metrics = kandangRecordings.map((recording) =>
+        buildDailyMetrics(recording, kandang, allRecordings)
+      );
+      todayMetrics = buildPeriodMetrics(kandang, metrics, allRecordings);
+      if (todayMetrics) {
+        hdpStatus = getHDPStatus(todayMetrics.hdpPercent);
+      }
     }
 
     return {

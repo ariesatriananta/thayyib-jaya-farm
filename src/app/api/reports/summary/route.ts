@@ -10,6 +10,9 @@ export async function GET(request: Request) {
   const access = await getAccessContext();
   const { searchParams } = new URL(request.url);
   const date = searchParams.get("date") || undefined;
+  const startDate = searchParams.get("startDate") || undefined;
+  const endDate = searchParams.get("endDate") || undefined;
+  const filters = startDate && endDate ? { startDate, endDate } : { date };
   const kandangIdsParam = searchParams.get("kandangIds");
   const requestedIds = kandangIdsParam
     ? kandangIdsParam.split(",").map((id) => id.trim()).filter(Boolean)
@@ -20,12 +23,12 @@ export async function GET(request: Request) {
     : allowedIds;
 
   if (access.role === "staff" && (!access.kandangIds || access.kandangIds.length === 0)) {
-    const summary = buildDashboardSummary([], [], date);
+    const summary = buildDashboardSummary([], [], filters);
     return NextResponse.json(summary);
   }
 
   if (filteredIds && filteredIds.length === 0) {
-    const summary = buildDashboardSummary([], [], date);
+    const summary = buildDashboardSummary([], [], filters);
     return NextResponse.json(summary);
   }
 
@@ -39,7 +42,7 @@ export async function GET(request: Request) {
   const summary = buildDashboardSummary(
     kandangRows.map(mapKandang),
     recordingRows.map(mapRecording),
-    date
+    filters
   );
 
   return NextResponse.json(summary);
