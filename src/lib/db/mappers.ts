@@ -16,6 +16,8 @@ export function mapKandang(row: KandangRow): Kandang {
     targetHDPPercent: row.targetHDPPercent,
     targetFCR: row.targetFCR,
     status,
+    ageReferenceDays: row.ageReferenceDays ?? null,
+    ageReferenceDate: row.ageReferenceDate ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

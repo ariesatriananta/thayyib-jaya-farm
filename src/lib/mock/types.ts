@@ -5,6 +5,8 @@ export interface Kandang {
   targetHDPPercent: number;
   targetFCR: number;
   status: 'active' | 'inactive';
+  ageReferenceDays?: number | null;
+  ageReferenceDate?: string | null;
   createdAt: string;
   updatedAt: string;
 }

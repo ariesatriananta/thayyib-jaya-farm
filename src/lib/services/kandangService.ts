@@ -20,6 +20,8 @@ export const kandangService = {
     targetHDPPercent: number;
     targetFCR: number;
     status: 'active' | 'inactive';
+    ageReferenceDays?: number | null;
+    ageReferenceDate?: string | null;
   }): Promise<Kandang> {
     return fetchJson<Kandang>('/api/kandang', {
       method: 'POST',

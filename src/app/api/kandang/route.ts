@@ -32,14 +32,18 @@ export async function POST(request: Request) {
 
   const body = await request.json();
 
-  const [created] = await db.insert(kandang).values({
+  const insertValues = {
     id: randomUUID(),
     name: body.name,
     initialChickenCount: body.initialChickenCount,
     targetHDPPercent: body.targetHDPPercent,
     targetFCR: body.targetFCR,
     status: body.status,
-  }).returning();
+    ageReferenceDays: body.ageReferenceDays ?? null,
+    ageReferenceDate: body.ageReferenceDate ?? null,
+  };
+
+  const [created] = await db.insert(kandang).values(insertValues as any).returning();
 
   return NextResponse.json(mapKandang(created));
 }

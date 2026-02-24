@@ -20,6 +20,8 @@ export const kandang = pgTable("kandang", {
   targetHDPPercent: real("target_hdp_percent").notNull(),
   targetFCR: real("target_fcr").notNull(),
   status: text("status").notNull(),
+  ageReferenceDays: integer("age_reference_days"),
+  ageReferenceDate: date("age_reference_date", { mode: "string" }),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
     .notNull()

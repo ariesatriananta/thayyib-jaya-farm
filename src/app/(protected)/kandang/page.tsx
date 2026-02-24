@@ -50,6 +50,7 @@ import { settingsService } from '@/lib/services/settingsService';
 import { useToast } from '@/hooks/use-toast';
 import type { Kandang } from '@/lib/mock/types';
 import { signalNavigationDone } from '@/lib/ui/navigationProgress';
+import { ageDaysToWeekDay, formatChickenAgeFromReference, weekDayToAgeDays } from '@/lib/age';
 
 const KandangPage = () => {
   const { toast } = useToast();
@@ -70,6 +71,9 @@ const KandangPage = () => {
     targetHDPPercent: settings.defaultTargetHDPPercent.toString(),
     targetFCR: settings.defaultTargetFCR.toString(),
     status: 'active' as 'active' | 'inactive',
+    ageReferenceWeek: '',
+    ageReferenceDay: '',
+    ageReferenceDate: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -115,6 +119,9 @@ const KandangPage = () => {
       targetHDPPercent: settings.defaultTargetHDPPercent.toString(),
       targetFCR: settings.defaultTargetFCR.toString(),
       status: 'active',
+      ageReferenceWeek: '',
+      ageReferenceDay: '',
+      ageReferenceDate: '',
     });
     setErrors({});
     setEditingKandang(null);
@@ -122,12 +129,16 @@ const KandangPage = () => {
 
   const openEditDialog = (kandang: Kandang) => {
     setEditingKandang(kandang);
+    const ageParts = ageDaysToWeekDay(kandang.ageReferenceDays ?? 0);
     setFormData({
       name: kandang.name,
       initialChickenCount: kandang.initialChickenCount.toString(),
       targetHDPPercent: kandang.targetHDPPercent.toString(),
       targetFCR: kandang.targetFCR.toString(),
       status: kandang.status,
+      ageReferenceWeek: ageParts ? ageParts.week.toString() : '',
+      ageReferenceDay: ageParts ? ageParts.day.toString() : '',
+      ageReferenceDate: kandang.ageReferenceDate ?? '',
     });
     setIsDialogOpen(true);
   };
@@ -145,6 +156,22 @@ const KandangPage = () => {
     if (!formData.targetFCR || parseFloat(formData.targetFCR) <= 0) {
       newErrors.targetFCR = 'Target FCR harus lebih dari 0';
     }
+    const hasAnyAgeField = Boolean(
+      formData.ageReferenceWeek || formData.ageReferenceDay || formData.ageReferenceDate
+    );
+    if (hasAnyAgeField) {
+      const week = parseInt(formData.ageReferenceWeek);
+      const day = parseInt(formData.ageReferenceDay);
+      if (!formData.ageReferenceWeek || Number.isNaN(week) || week < 1) {
+        newErrors.ageReferenceWeek = 'Minggu harus minimal 1';
+      }
+      if (!formData.ageReferenceDay || Number.isNaN(day) || day < 1 || day > 7) {
+        newErrors.ageReferenceDay = 'Hari ke harus 1 sampai 7';
+      }
+      if (!formData.ageReferenceDate) {
+        newErrors.ageReferenceDate = 'Tanggal acuan umur wajib diisi';
+      }
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -155,6 +182,17 @@ const KandangPage = () => {
 
     setIsSubmitting(true);
     try {
+      const hasAgeReference = Boolean(
+        formData.ageReferenceWeek && formData.ageReferenceDay && formData.ageReferenceDate
+      );
+      const ageReferenceDays = hasAgeReference
+        ? weekDayToAgeDays(
+            parseInt(formData.ageReferenceWeek),
+            parseInt(formData.ageReferenceDay)
+          )
+        : null;
+      const ageReferenceDate = hasAgeReference ? formData.ageReferenceDate : null;
+
       if (editingKandang) {
         await kandangService.update(editingKandang.id, {
           name: formData.name,
@@ -162,6 +200,8 @@ const KandangPage = () => {
           targetHDPPercent: parseFloat(formData.targetHDPPercent),
           targetFCR: parseFloat(formData.targetFCR),
           status: formData.status,
+          ageReferenceDays,
+          ageReferenceDate,
         });
         toast({ title: 'Berhasil', description: 'Data kandang berhasil diperbarui.' });
       } else {
@@ -171,6 +211,8 @@ const KandangPage = () => {
           targetHDPPercent: parseFloat(formData.targetHDPPercent),
           targetFCR: parseFloat(formData.targetFCR),
           status: formData.status,
+          ageReferenceDays,
+          ageReferenceDate,
         });
         toast({ title: 'Berhasil', description: 'Kandang baru berhasil ditambahkan.' });
       }
@@ -231,7 +273,7 @@ const KandangPage = () => {
                 Tambah Kandang
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md max-h-[85vh] overflow-hidden">
               <DialogHeader>
                 <DialogTitle>{editingKandang ? 'Edit Kandang' : 'Tambah Kandang Baru'}</DialogTitle>
                 <DialogDescription>
@@ -239,7 +281,7 @@ const KandangPage = () => {
                 </DialogDescription>
               </DialogHeader>
               
-              <div className="space-y-4 py-4">
+              <div className="space-y-4 py-4 overflow-y-auto pr-1 max-h-[calc(85vh-10rem)]">
                 <div className="space-y-2 animate-slide-up" style={fieldAnimation(0)}>
                   <Label>Nama Kandang *</Label>
                   <Input
@@ -294,6 +336,50 @@ const KandangPage = () => {
                 </div>
 
                 <div className="space-y-2 animate-slide-up" style={fieldAnimation(4)}>
+                  <Label>Umur Ayam Acuan (Opsional)</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Minggu ke</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={formData.ageReferenceWeek}
+                        onChange={(e) => setFormData({ ...formData, ageReferenceWeek: e.target.value })}
+                        placeholder="24"
+                        className={errors.ageReferenceWeek ? 'border-destructive' : ''}
+                      />
+                      {errors.ageReferenceWeek && <p className="text-sm text-destructive">{errors.ageReferenceWeek}</p>}
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Hari ke (1-7)</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="7"
+                        value={formData.ageReferenceDay}
+                        onChange={(e) => setFormData({ ...formData, ageReferenceDay: e.target.value })}
+                        placeholder="1"
+                        className={errors.ageReferenceDay ? 'border-destructive' : ''}
+                      />
+                      {errors.ageReferenceDay && <p className="text-sm text-destructive">{errors.ageReferenceDay}</p>}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Berlaku per tanggal</Label>
+                    <Input
+                      type="date"
+                      value={formData.ageReferenceDate}
+                      onChange={(e) => setFormData({ ...formData, ageReferenceDate: e.target.value })}
+                      className={errors.ageReferenceDate ? 'border-destructive' : ''}
+                    />
+                    {errors.ageReferenceDate && <p className="text-sm text-destructive">{errors.ageReferenceDate}</p>}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Isi lengkap untuk menghitung umur ayam otomatis per hari. Kosongkan jika belum diatur.
+                  </p>
+                </div>
+
+                <div className="space-y-2 animate-slide-up" style={fieldAnimation(5)}>
                   <Label>Status</Label>
                   <Select
                     value={formData.status}
@@ -312,7 +398,7 @@ const KandangPage = () => {
                 </div>
               </div>
 
-              <DialogFooter className="animate-slide-up" style={fieldAnimation(5)}>
+              <DialogFooter className="animate-slide-up" style={fieldAnimation(6)}>
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Batal
                 </Button>
@@ -354,6 +440,7 @@ const KandangPage = () => {
                       <TableHead className="text-right">Jumlah Ayam</TableHead>
                       <TableHead className="text-right">Target HDP</TableHead>
                       <TableHead className="text-right">Target FCR</TableHead>
+                      <TableHead>Umur Ayam</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Aksi</TableHead>
                     </TableRow>
@@ -365,6 +452,9 @@ const KandangPage = () => {
                         <TableCell className="text-right">{k.initialChickenCount.toLocaleString()}</TableCell>
                         <TableCell className="text-right">{k.targetHDPPercent}%</TableCell>
                         <TableCell className="text-right">{k.targetFCR}</TableCell>
+                        <TableCell>
+                          {formatChickenAgeFromReference(k.ageReferenceDays, k.ageReferenceDate) ?? 'Belum diatur'}
+                        </TableCell>
                         <TableCell>
                           <button onClick={() => handleToggleStatus(k.id)}>
                             <KandangStatusBadge status={k.status} size="sm" />

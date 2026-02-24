@@ -3,9 +3,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import type { KandangStatus } from '@/lib/mock/types';
-import { Home, Egg, TrendingUp, BadgeDollarSign, Calculator } from 'lucide-react';
+import { Home, Egg, TrendingUp, BadgeDollarSign, Calculator, CalendarDays } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { formatChickenAgeFromReference } from '@/lib/age';
 
 interface KandangStatusGridProps {
   statuses: KandangStatus[];
@@ -57,6 +58,20 @@ export function KandangStatusGrid({ statuses }: KandangStatusGridProps) {
               </div>
             </CardHeader>
             <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground flex items-center gap-1.5">
+                    <CalendarDays className="w-3.5 h-3.5" />
+                    Umur
+                  </span>
+                  <span className="font-medium text-right">
+                    {formatChickenAgeFromReference(
+                      status.kandang.ageReferenceDays,
+                      status.kandang.ageReferenceDate,
+                      status.todayMetrics?.date
+                    ) ?? 'Belum diatur'}
+                  </span>
+                </div>
               {status.todayMetrics ? (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-sm">
@@ -113,6 +128,7 @@ export function KandangStatusGrid({ statuses }: KandangStatusGridProps) {
                   Belum ada data pada periode ini
                 </div>
               )}
+              </div>
             </CardContent>
           </Card>
         </Link>
