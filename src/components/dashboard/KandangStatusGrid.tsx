@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import type { KandangStatus } from '@/lib/mock/types';
-import { Home, Egg, TrendingUp, BadgeDollarSign, Calculator, CalendarDays } from 'lucide-react';
+import { Home, Egg, TrendingUp, BadgeDollarSign, Calculator, CalendarDays, Scale, HeartPulse, UtensilsCrossed } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { formatChickenAgeFromReference } from '@/lib/age';
@@ -89,7 +89,10 @@ export function KandangStatusGrid({ statuses }: KandangStatusGridProps) {
                     <span className="font-medium">{status.todayMetrics.eggsKg} kg</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">FCR</span>
+                    <span className="text-muted-foreground flex items-center gap-1.5">
+                      <Scale className="w-3.5 h-3.5" />
+                      FCR
+                    </span>
                     <span className="font-medium">{status.todayMetrics.fcr}</span>
                   </div>
                   {role === 'admin' && (
@@ -119,8 +122,25 @@ export function KandangStatusGrid({ statuses }: KandangStatusGridProps) {
                     </div>
                   )}
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Ayam Hidup (akhir)</span>
+                    <span className="text-muted-foreground flex items-center gap-1.5">
+                      <HeartPulse className="w-3.5 h-3.5" />
+                      Ayam Hidup (akhir)
+                    </span>
                     <span className="font-medium">{status.todayMetrics.totalChickenToday.toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground flex items-center gap-1.5">
+                      <UtensilsCrossed className="w-3.5 h-3.5" />
+                      Feed Intake
+                    </span>
+                    <span className="font-medium">
+                      {status.todayMetrics.totalChickenToday > 0
+                        ? `${(((status.todayMetrics.feedUsedKg / status.todayMetrics.totalChickenToday) * 1000)).toLocaleString('id-ID', {
+                            minimumFractionDigits: 1,
+                            maximumFractionDigits: 1,
+                          })}gr`
+                        : '-'}
+                    </span>
                   </div>
                 </div>
               ) : (
