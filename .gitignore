@@ -33,8 +33,10 @@ dist-ssr
 
 
 # env files
-.env*
-.env.example
+.env
+.env.local
+.env.production
+.env.*.local
 
 # vercel
 .vercel
