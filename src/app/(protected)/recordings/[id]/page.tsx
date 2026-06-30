@@ -47,6 +47,9 @@ const RecordingEdit = () => {
     feedRemainingKg: '',
     eggsKg: '',
     eggsCount: '',
+    whiteEggsKg: '',
+    whiteEggsCount: '',
+    brokenEggsCount: '',
     feedPriceKg: '0',
     eggsPriceKg: '0',
     deadChickenCount: '',
@@ -90,6 +93,9 @@ const RecordingEdit = () => {
             feedRemainingKg: data.feedRemainingKg.toString(),
             eggsKg: data.eggsKg.toString(),
             eggsCount: data.eggsCount.toString(),
+            whiteEggsKg: (data.whiteEggsKg ?? 0).toString(),
+            whiteEggsCount: (data.whiteEggsCount ?? 0).toString(),
+            brokenEggsCount: (data.brokenEggsCount ?? 0).toString(),
             feedPriceKg: data.feedPriceKg.toString(),
             eggsPriceKg: data.eggsPriceKg.toString(),
             deadChickenCount: data.deadChickenCount.toString(),
@@ -161,6 +167,9 @@ const RecordingEdit = () => {
         eggsKg: parseFloat(formData.eggsKg),
         eggsPriceKg: role === 'admin' ? parseFloat(formData.eggsPriceKg) || 0 : 0,
         eggsCount: parseInt(formData.eggsCount),
+        whiteEggsKg: parseFloat(formData.whiteEggsKg) || 0,
+        whiteEggsCount: parseInt(formData.whiteEggsCount) || 0,
+        brokenEggsCount: parseInt(formData.brokenEggsCount) || 0,
         deadChickenCount: parseInt(formData.deadChickenCount) || 0,
         notes: formData.notes,
       });
@@ -366,6 +375,42 @@ const RecordingEdit = () => {
                     placeholder="0"
                   />
                   {errors.eggsCount && <p className="text-sm text-destructive">{errors.eggsCount}</p>}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Telur Putih (kg)</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={formData.whiteEggsKg}
+                    onChange={(e) => handleChange('whiteEggsKg', e.target.value)}
+                    placeholder="0"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Telur Putih (butir)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={formData.whiteEggsCount}
+                    onChange={(e) => handleChange('whiteEggsCount', e.target.value)}
+                    placeholder="0"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Telur BS (butir)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={formData.brokenEggsCount}
+                    onChange={(e) => handleChange('brokenEggsCount', e.target.value)}
+                    placeholder="0"
+                  />
                 </div>
               </div>
 

@@ -22,6 +22,9 @@ export interface Recording {
   eggsKg: number;
   eggsPriceKg: number;
   eggsCount: number;
+  whiteEggsKg: number;
+  whiteEggsCount: number;
+  brokenEggsCount: number;
   deadChickenCount: number;
   notes: string;
   createdAt: string;
@@ -41,6 +44,9 @@ export interface DailyMetrics {
   eggsKg: number;
   eggsPriceKg: number;
   eggsCount: number;
+  whiteEggsKg: number;
+  whiteEggsCount: number;
+  brokenEggsCount: number;
   deadChickenCount: number;
   feedCost: number;
   eggsRevenue: number;
@@ -58,6 +64,9 @@ export interface DailyMetrics {
 export interface DashboardSummary {
   totalEggsKg: number;
   totalEggsCount: number;
+  totalWhiteEggsKg: number;
+  totalWhiteEggsCount: number;
+  totalBrokenEggsCount: number;
   totalFeedIn: number;
   totalFeedUsed: number;
   totalDeadChickens: number;

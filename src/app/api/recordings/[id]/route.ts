@@ -42,6 +42,9 @@ export async function PUT(request: Request, { params }: RouteParams) {
   const eggsPriceKg = access.role === "staff"
     ? existing.eggsPriceKg
     : body.eggsPriceKg ?? existing.eggsPriceKg;
+  const whiteEggsKg = Math.max(0, Number(body.whiteEggsKg ?? existing.whiteEggsKg ?? 0));
+  const whiteEggsCount = Math.max(0, Number(body.whiteEggsCount ?? existing.whiteEggsCount ?? 0));
+  const brokenEggsCount = Math.max(0, Number(body.brokenEggsCount ?? existing.brokenEggsCount ?? 0));
 
   const [updated] = await db
     .update(recordings)
@@ -52,6 +55,9 @@ export async function PUT(request: Request, { params }: RouteParams) {
       feedRemainingKg,
       feedUsedKg,
       eggsPriceKg,
+      whiteEggsKg,
+      whiteEggsCount,
+      brokenEggsCount,
     })
     .where(eq(recordings.id, params.id))
     .returning();

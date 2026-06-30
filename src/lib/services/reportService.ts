@@ -7,11 +7,14 @@ import type {
 } from '../mock/types';
 import { fetchJson } from './apiClient';
 
+export type FeedCostBasis = 'feedIn' | 'feedUsed';
+
 export const reportService = {
   async getDashboardSummary(
     startDate?: string,
     endDate?: string,
-    kandangIds?: string[]
+    kandangIds?: string[],
+    feedCostBasis: FeedCostBasis = 'feedIn'
   ): Promise<DashboardSummary> {
     const params = new URLSearchParams();
     if (startDate && endDate) {
@@ -21,6 +24,7 @@ export const reportService = {
       params.set('date', startDate);
     }
     if (kandangIds && kandangIds.length > 0) params.set('kandangIds', kandangIds.join(','));
+    params.set('feedCostBasis', feedCostBasis);
     const query = params.toString();
     return fetchJson<DashboardSummary>(`/api/reports/summary${query ? `?${query}` : ''}`);
   },
@@ -28,7 +32,8 @@ export const reportService = {
   async getKandangStatuses(
     startDate?: string,
     endDate?: string,
-    kandangIds?: string[]
+    kandangIds?: string[],
+    feedCostBasis: FeedCostBasis = 'feedIn'
   ): Promise<KandangStatus[]> {
     const params = new URLSearchParams();
     if (startDate && endDate) {
@@ -38,6 +43,7 @@ export const reportService = {
       params.set('date', startDate);
     }
     if (kandangIds && kandangIds.length > 0) params.set('kandangIds', kandangIds.join(','));
+    params.set('feedCostBasis', feedCostBasis);
     const query = params.toString();
     return fetchJson<KandangStatus[]>(`/api/reports/statuses${query ? `?${query}` : ''}`);
   },
@@ -46,7 +52,8 @@ export const reportService = {
     startDate?: string,
     endDate?: string,
     limit: number = 3,
-    kandangIds?: string[]
+    kandangIds?: string[],
+    feedCostBasis: FeedCostBasis = 'feedIn'
   ): Promise<KandangStatus[]> {
     const params = new URLSearchParams();
     if (startDate && endDate) {
@@ -57,6 +64,7 @@ export const reportService = {
     }
     params.set('limit', limit.toString());
     if (kandangIds && kandangIds.length > 0) params.set('kandangIds', kandangIds.join(','));
+    params.set('feedCostBasis', feedCostBasis);
     return fetchJson<KandangStatus[]>(`/api/reports/top?${params.toString()}`);
   },
 
@@ -64,7 +72,8 @@ export const reportService = {
     startDate?: string,
     endDate?: string,
     limit: number = 3,
-    kandangIds?: string[]
+    kandangIds?: string[],
+    feedCostBasis: FeedCostBasis = 'feedIn'
   ): Promise<KandangStatus[]> {
     const params = new URLSearchParams();
     if (startDate && endDate) {
@@ -75,6 +84,7 @@ export const reportService = {
     }
     params.set('limit', limit.toString());
     if (kandangIds && kandangIds.length > 0) params.set('kandangIds', kandangIds.join(','));
+    params.set('feedCostBasis', feedCostBasis);
     return fetchJson<KandangStatus[]>(`/api/reports/bottom?${params.toString()}`);
   },
 

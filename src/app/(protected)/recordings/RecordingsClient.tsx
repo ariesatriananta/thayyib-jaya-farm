@@ -248,6 +248,9 @@ const RecordingsClient = () => {
                       {role === 'admin' && <TableHead className="text-right">Harga Pakan</TableHead>}
                       <TableHead className="text-right">Telur (kg)</TableHead>
                       <TableHead className="text-right">Telur (butir)</TableHead>
+                      <TableHead className="text-right">Telur Putih (kg)</TableHead>
+                      <TableHead className="text-right">Telur Putih (butir)</TableHead>
+                      <TableHead className="text-right">Telur BS (butir)</TableHead>
                       {role === 'admin' && <TableHead className="text-right">Harga Telur</TableHead>}
                       <TableHead className="text-right">FCR</TableHead>
                       <TableHead className="text-right">HDP%</TableHead>
@@ -275,6 +278,9 @@ const RecordingsClient = () => {
                         )}
                         <TableCell className="text-right">{m.eggsKg}</TableCell>
                         <TableCell className="text-right">{m.eggsCount.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">{m.whiteEggsKg}</TableCell>
+                        <TableCell className="text-right">{m.whiteEggsCount.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">{m.brokenEggsCount.toLocaleString()}</TableCell>
                         {role === 'admin' && (
                           <TableCell className="text-right">
                             Rp {Math.round(m.eggsPriceKg).toLocaleString('id-ID')}

@@ -1,0 +1,4 @@
+ALTER TABLE recordings
+ADD COLUMN IF NOT EXISTS white_eggs_kg real NOT NULL DEFAULT 0,
+ADD COLUMN IF NOT EXISTS white_eggs_count integer NOT NULL DEFAULT 0,
+ADD COLUMN IF NOT EXISTS broken_eggs_count integer NOT NULL DEFAULT 0;

@@ -24,6 +24,15 @@ type DateRangeFilter = {
   endDate?: string;
 };
 
+export type FeedCostBasis = "feedIn" | "feedUsed";
+
+function getMetricFeedCost(metric: DailyMetrics, feedCostBasis: FeedCostBasis): number {
+  if (feedCostBasis === "feedUsed") {
+    return metric.feedUsedKg * metric.feedPriceKg;
+  }
+  return metric.feedCost;
+}
+
 function resolveDateRange(filters?: DateRangeFilter): { startDate: string; endDate: string } {
   const today = format(new Date(), "yyyy-MM-dd");
   if (!filters) {
@@ -41,7 +50,8 @@ function resolveDateRange(filters?: DateRangeFilter): { startDate: string; endDa
 function buildPeriodMetrics(
   kandang: Kandang,
   metrics: DailyMetrics[],
-  allRecordings: Recording[]
+  allRecordings: Recording[],
+  feedCostBasis: FeedCostBasis = "feedIn"
 ): DailyMetrics | null {
   if (metrics.length === 0) return null;
 
@@ -55,8 +65,11 @@ function buildPeriodMetrics(
       acc.feedRemainingKg = metric.feedRemainingKg;
       acc.eggsKg += metric.eggsKg;
       acc.eggsCount += metric.eggsCount;
+      acc.whiteEggsKg += metric.whiteEggsKg;
+      acc.whiteEggsCount += metric.whiteEggsCount;
+      acc.brokenEggsCount += metric.brokenEggsCount;
       acc.deadChickenCount += metric.deadChickenCount;
-      acc.feedCost += metric.feedCost;
+      acc.feedCost += getMetricFeedCost(metric, feedCostBasis);
       acc.eggsRevenue += metric.eggsRevenue;
       return acc;
     },
@@ -66,6 +79,9 @@ function buildPeriodMetrics(
       feedRemainingKg: 0,
       eggsKg: 0,
       eggsCount: 0,
+      whiteEggsKg: 0,
+      whiteEggsCount: 0,
+      brokenEggsCount: 0,
       deadChickenCount: 0,
       feedCost: 0,
       eggsRevenue: 0,
@@ -100,6 +116,9 @@ function buildPeriodMetrics(
     eggsKg: Number(totals.eggsKg.toFixed(1)),
     eggsPriceKg: Number(eggsPriceKg.toFixed(2)),
     eggsCount: totals.eggsCount,
+    whiteEggsKg: Number(totals.whiteEggsKg.toFixed(1)),
+    whiteEggsCount: totals.whiteEggsCount,
+    brokenEggsCount: totals.brokenEggsCount,
     deadChickenCount: totals.deadChickenCount,
     feedCost: Number(totals.feedCost.toFixed(2)),
     eggsRevenue: Number(totals.eggsRevenue.toFixed(2)),
@@ -118,7 +137,8 @@ function buildPeriodMetrics(
 export function buildDashboardSummary(
   kandangList: Kandang[],
   allRecordings: Recording[],
-  filters?: DateRangeFilter
+  filters?: DateRangeFilter,
+  feedCostBasis: FeedCostBasis = "feedIn"
 ): DashboardSummary {
   const { startDate, endDate } = resolveDateRange(filters);
   const rangeRecordings = allRecordings.filter(
@@ -135,13 +155,16 @@ export function buildDashboardSummary(
   }
 
   const { averageFCR, averageHDP } = calculateAverages(metrics);
-  const totalFeedCost = metrics.reduce((sum, m) => sum + m.feedCost, 0);
+  const totalFeedCost = metrics.reduce((sum, m) => sum + getMetricFeedCost(m, feedCostBasis), 0);
   const totalEggsRevenue = metrics.reduce((sum, m) => sum + m.eggsRevenue, 0);
   const totalHpp = totalEggsRevenue - totalFeedCost;
 
   return {
     totalEggsKg: Number(metrics.reduce((sum, m) => sum + m.eggsKg, 0).toFixed(1)),
     totalEggsCount: metrics.reduce((sum, m) => sum + m.eggsCount, 0),
+    totalWhiteEggsKg: Number(metrics.reduce((sum, m) => sum + m.whiteEggsKg, 0).toFixed(1)),
+    totalWhiteEggsCount: metrics.reduce((sum, m) => sum + m.whiteEggsCount, 0),
+    totalBrokenEggsCount: metrics.reduce((sum, m) => sum + m.brokenEggsCount, 0),
     totalFeedIn: Number(metrics.reduce((sum, m) => sum + m.feedInKg, 0).toFixed(1)),
     totalFeedUsed: Number(metrics.reduce((sum, m) => sum + m.feedUsedKg, 0).toFixed(1)),
     totalDeadChickens: metrics.reduce((sum, m) => sum + m.deadChickenCount, 0),
@@ -158,7 +181,8 @@ export function buildDashboardSummary(
 export function buildKandangStatuses(
   kandangList: Kandang[],
   allRecordings: Recording[],
-  filters?: DateRangeFilter
+  filters?: DateRangeFilter,
+  feedCostBasis: FeedCostBasis = "feedIn"
 ): KandangStatus[] {
   const { startDate, endDate } = resolveDateRange(filters);
   const activeKandang = kandangList.filter((k) => k.status === "active");
@@ -175,7 +199,7 @@ export function buildKandangStatuses(
       const metrics = kandangRecordings.map((recording) =>
         buildDailyMetrics(recording, kandang, allRecordings)
       );
-      todayMetrics = buildPeriodMetrics(kandang, metrics, allRecordings);
+      todayMetrics = buildPeriodMetrics(kandang, metrics, allRecordings, feedCostBasis);
       if (todayMetrics) {
         hdpStatus = getHDPStatus(todayMetrics.hdpPercent);
       }

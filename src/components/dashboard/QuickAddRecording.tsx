@@ -47,6 +47,9 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
     feedRemainingKg: '',
     eggsKg: '',
     eggsCount: '',
+    whiteEggsKg: '',
+    whiteEggsCount: '',
+    brokenEggsCount: '',
     feedPriceKg: '0',
     eggsPriceKg: '0',
     deadChickenCount: '0',
@@ -95,6 +98,9 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
         eggsKg: parseFloat(formData.eggsKg) || 0,
         eggsPriceKg: role === 'admin' ? parseFloat(formData.eggsPriceKg) || 0 : 0,
         eggsCount: parseInt(formData.eggsCount) || 0,
+        whiteEggsKg: parseFloat(formData.whiteEggsKg) || 0,
+        whiteEggsCount: parseInt(formData.whiteEggsCount) || 0,
+        brokenEggsCount: parseInt(formData.brokenEggsCount) || 0,
         deadChickenCount: parseInt(formData.deadChickenCount) || 0,
         notes: formData.notes,
       });
@@ -111,6 +117,9 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
         feedRemainingKg: '',
         eggsKg: '',
         eggsCount: '',
+        whiteEggsKg: '',
+        whiteEggsCount: '',
+        brokenEggsCount: '',
         feedPriceKg: '0',
         eggsPriceKg: '0',
         deadChickenCount: '0',
@@ -223,8 +232,42 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
               />
             </div>
 
+            <div className="space-y-2 animate-slide-up" style={fieldAnimation(5)}>
+              <Label>Telur Putih (kg)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                min="0"
+                value={formData.whiteEggsKg}
+                onChange={(e) => setFormData({ ...formData, whiteEggsKg: e.target.value })}
+                placeholder="0"
+              />
+            </div>
+
+            <div className="space-y-2 animate-slide-up" style={fieldAnimation(6)}>
+              <Label>Telur Putih (butir)</Label>
+              <Input
+                type="number"
+                min="0"
+                value={formData.whiteEggsCount}
+                onChange={(e) => setFormData({ ...formData, whiteEggsCount: e.target.value })}
+                placeholder="0"
+              />
+            </div>
+
+            <div className="space-y-2 animate-slide-up" style={fieldAnimation(7)}>
+              <Label>Telur BS (butir)</Label>
+              <Input
+                type="number"
+                min="0"
+                value={formData.brokenEggsCount}
+                onChange={(e) => setFormData({ ...formData, brokenEggsCount: e.target.value })}
+                placeholder="0"
+              />
+            </div>
+
             {role === 'admin' && (
-              <div className="space-y-2 animate-slide-up" style={fieldAnimation(5)}>
+              <div className="space-y-2 animate-slide-up" style={fieldAnimation(8)}>
                 <Label>Harga Pakan (per kg)</Label>
                 <Input
                   type="number"
@@ -237,7 +280,7 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
             )}
 
             {role === 'admin' && (
-              <div className="space-y-2 animate-slide-up" style={fieldAnimation(6)}>
+              <div className="space-y-2 animate-slide-up" style={fieldAnimation(9)}>
                 <Label>Harga Telur (per kg)</Label>
                 <Input
                   type="number"
@@ -249,7 +292,7 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
               </div>
             )}
 
-            <div className="space-y-2 animate-slide-up" style={fieldAnimation(5 + adminOffset)}>
+            <div className="space-y-2 animate-slide-up" style={fieldAnimation(8 + adminOffset)}>
               <Label>Ayam Mati</Label>
               <Input
                 type="number"
@@ -260,7 +303,7 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
               />
             </div>
 
-            <div className="space-y-2 sm:col-span-2 animate-slide-up" style={fieldAnimation(6 + adminOffset)}>
+            <div className="space-y-2 sm:col-span-2 animate-slide-up" style={fieldAnimation(9 + adminOffset)}>
               <Label>Keterangan</Label>
               <Input
                 value={formData.notes}
@@ -270,7 +313,7 @@ export function QuickAddRecording({ onClose }: QuickAddRecordingProps) {
             </div>
           </div>
 
-          <div className="flex gap-2 justify-end animate-slide-up" style={fieldAnimation(7 + adminOffset)}>
+          <div className="flex gap-2 justify-end animate-slide-up" style={fieldAnimation(10 + adminOffset)}>
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
               Batal
             </Button>

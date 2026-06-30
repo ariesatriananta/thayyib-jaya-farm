@@ -21,6 +21,11 @@ import { Label } from '@/components/ui/label';
 import { Filter } from 'lucide-react';
 import { recordingService } from '@/lib/services/recordingService';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+type FeedCostBasis = 'feedIn' | 'feedUsed';
+
+const FEED_COST_BASIS_STORAGE_KEY = 'dashboardProfitFeedCostBasis';
 
 const Dashboard = () => {
   const today = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
@@ -33,6 +38,7 @@ const Dashboard = () => {
   const [latestDate, setLatestDate] = useState<string | null>(null);
   const [showFilter, setShowFilter] = useState(false);
   const [filterNonce, setFilterNonce] = useState(0);
+  const [feedCostBasis, setFeedCostBasis] = useState<FeedCostBasis>('feedIn');
   const [hasManualFilter, setHasManualFilter] = useState(false);
   const [isApplyingFilter, setIsApplyingFilter] = useState(false);
   const [selectedKandangIds, setSelectedKandangIds] = useState<string[]>([]);
@@ -41,6 +47,9 @@ const Dashboard = () => {
   const [summary, setSummary] = useState<DashboardSummary>({
     totalEggsKg: 0,
     totalEggsCount: 0,
+    totalWhiteEggsKg: 0,
+    totalWhiteEggsCount: 0,
+    totalBrokenEggsCount: 0,
     totalFeedIn: 0,
     totalFeedUsed: 0,
     totalDeadChickens: 0,
@@ -95,6 +104,19 @@ const Dashboard = () => {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(FEED_COST_BASIS_STORAGE_KEY);
+    if (stored === 'feedUsed' || stored === 'feedIn') {
+      setFeedCostBasis(stored);
+    }
+  }, []);
+
+  const handleFeedCostBasisChange = (value: string) => {
+    const nextBasis: FeedCostBasis = value === 'feedUsed' ? 'feedUsed' : 'feedIn';
+    setFeedCostBasis(nextBasis);
+    window.localStorage.setItem(FEED_COST_BASIS_STORAGE_KEY, nextBasis);
+  };
 
   useEffect(() => {
     if (!hasInitKandangFilter && kandangList.length > 0) {
@@ -200,10 +222,10 @@ const Dashboard = () => {
     setIsLoading(true);
 
     Promise.all([
-      reportService.getDashboardSummary(appliedStartDate, appliedEndDate, effectiveKandangIds),
-      reportService.getKandangStatuses(appliedStartDate, appliedEndDate, effectiveKandangIds),
-      reportService.getTopPerformers(appliedStartDate, appliedEndDate, 3, effectiveKandangIds),
-      reportService.getBottomPerformers(appliedStartDate, appliedEndDate, 3, effectiveKandangIds),
+      reportService.getDashboardSummary(appliedStartDate, appliedEndDate, effectiveKandangIds, feedCostBasis),
+      reportService.getKandangStatuses(appliedStartDate, appliedEndDate, effectiveKandangIds, feedCostBasis),
+      reportService.getTopPerformers(appliedStartDate, appliedEndDate, 3, effectiveKandangIds, feedCostBasis),
+      reportService.getBottomPerformers(appliedStartDate, appliedEndDate, 3, effectiveKandangIds, feedCostBasis),
     ])
       .then(([summaryData, statuses, top, bottom]) => {
         if (!isMounted) return;
@@ -223,7 +245,7 @@ const Dashboard = () => {
     return () => {
       isMounted = false;
     };
-  }, [appliedEndDate, appliedStartDate, effectiveKandangIds, filterNonce, hasNoAccess, kandangLoaded]);
+  }, [appliedEndDate, appliedStartDate, effectiveKandangIds, feedCostBasis, filterNonce, hasNoAccess, kandangLoaded]);
 
   if (isLoading) {
     return <Loading />;
@@ -354,11 +376,28 @@ const Dashboard = () => {
         )}
 
         {/* Summary Cards */}
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          <span>Ringkasan</span>
-          <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
-            {periodLabel}
-          </span>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <span>Ringkasan</span>
+            <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+              {periodLabel}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Basis Biaya Pakan
+            </Label>
+            <Tabs value={feedCostBasis} onValueChange={handleFeedCostBasisChange}>
+              <TabsList className="h-9">
+                <TabsTrigger value="feedIn" className="px-3 text-xs">
+                  Pakan Masuk
+                </TabsTrigger>
+                <TabsTrigger value="feedUsed" className="px-3 text-xs">
+                  Pakan Terpakai
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           <StatCard
@@ -376,13 +415,26 @@ const Dashboard = () => {
             variant="primary"
           />
           <StatCard
+            title="Telur Putih"
+            value={`${summary.totalWhiteEggsKg} kg`}
+            animatedNumber={summary.totalWhiteEggsKg}
+            animationDurationMs={2000}
+            valueSuffix=" kg"
+            valueFormatter={(value) => value.toFixed(1)}
+            revealDelayMs={40}
+            revealDurationMs={730}
+            revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
+            subtitle={`${summary.totalWhiteEggsCount.toLocaleString()} butir | BS ${summary.totalBrokenEggsCount.toLocaleString()} butir`}
+            icon={Egg}
+          />
+          <StatCard
             title="Pakan Terpakai"
             value={`${summary.totalFeedUsed} kg`}
             animatedNumber={summary.totalFeedUsed}
             animationDurationMs={2000}
             valueSuffix=" kg"
             valueFormatter={(value) => value.toFixed(1)}
-            revealDelayMs={80}
+            revealDelayMs={100}
             revealDurationMs={760}
             revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
             icon={Wheat}
@@ -395,7 +447,7 @@ const Dashboard = () => {
             animationDurationMs={2000}
             valueSuffix=" kg"
             valueFormatter={(value) => value.toFixed(1)}
-            revealDelayMs={140}
+            revealDelayMs={160}
             revealDurationMs={800}
             revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
             icon={Package}
@@ -406,7 +458,7 @@ const Dashboard = () => {
             animatedNumber={summary.totalDeadChickens}
             animationDurationMs={2000}
             valueFormatter={(value) => Math.round(value).toLocaleString('id-ID')}
-            revealDelayMs={160}
+            revealDelayMs={180}
             revealDurationMs={820}
             revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
             icon={Skull}

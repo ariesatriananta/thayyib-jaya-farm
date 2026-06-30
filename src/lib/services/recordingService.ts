@@ -10,6 +10,9 @@ export interface CreateRecordingInput {
   eggsKg: number;
   eggsPriceKg?: number;
   eggsCount: number;
+  whiteEggsKg?: number;
+  whiteEggsCount?: number;
+  brokenEggsCount?: number;
   deadChickenCount: number;
   notes: string;
 }

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { kandang as kandangTable, recordings } from "@/lib/db/schema";
 import { mapKandang, mapRecording } from "@/lib/db/mappers";
-import { buildDashboardSummary } from "@/lib/reporting";
+import { buildDashboardSummary, type FeedCostBasis } from "@/lib/reporting";
 import { getAccessContext } from "@/lib/db/access";
 import { inArray } from "drizzle-orm";
 
@@ -13,6 +13,9 @@ export async function GET(request: Request) {
   const startDate = searchParams.get("startDate") || undefined;
   const endDate = searchParams.get("endDate") || undefined;
   const filters = startDate && endDate ? { startDate, endDate } : { date };
+  const feedCostBasis: FeedCostBasis = searchParams.get("feedCostBasis") === "feedUsed"
+    ? "feedUsed"
+    : "feedIn";
   const kandangIdsParam = searchParams.get("kandangIds");
   const requestedIds = kandangIdsParam
     ? kandangIdsParam.split(",").map((id) => id.trim()).filter(Boolean)
@@ -23,12 +26,12 @@ export async function GET(request: Request) {
     : allowedIds;
 
   if (access.role === "staff" && (!access.kandangIds || access.kandangIds.length === 0)) {
-    const summary = buildDashboardSummary([], [], filters);
+    const summary = buildDashboardSummary([], [], filters, feedCostBasis);
     return NextResponse.json(summary);
   }
 
   if (filteredIds && filteredIds.length === 0) {
-    const summary = buildDashboardSummary([], [], filters);
+    const summary = buildDashboardSummary([], [], filters, feedCostBasis);
     return NextResponse.json(summary);
   }
 
@@ -42,7 +45,8 @@ export async function GET(request: Request) {
   const summary = buildDashboardSummary(
     kandangRows.map(mapKandang),
     recordingRows.map(mapRecording),
-    filters
+    filters,
+    feedCostBasis
   );
 
   return NextResponse.json(summary);

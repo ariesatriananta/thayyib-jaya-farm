@@ -81,6 +81,9 @@ export async function POST(request: Request) {
     eggsKg: body.eggsKg,
     eggsPriceKg,
     eggsCount: body.eggsCount,
+    whiteEggsKg: Math.max(0, Number(body.whiteEggsKg ?? 0)),
+    whiteEggsCount: Math.max(0, Number(body.whiteEggsCount ?? 0)),
+    brokenEggsCount: Math.max(0, Number(body.brokenEggsCount ?? 0)),
     deadChickenCount: body.deadChickenCount,
     notes: body.notes || "",
   } as typeof recordings.$inferInsert;

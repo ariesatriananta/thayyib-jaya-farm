@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { kandang as kandangTable, recordings } from "@/lib/db/schema";
 import { mapKandang, mapRecording } from "@/lib/db/mappers";
-import { buildKandangStatuses } from "@/lib/reporting";
+import { buildKandangStatuses, type FeedCostBasis } from "@/lib/reporting";
 import { getAccessContext } from "@/lib/db/access";
 import { inArray } from "drizzle-orm";
 
@@ -13,6 +13,9 @@ export async function GET(request: Request) {
   const startDate = searchParams.get("startDate") || undefined;
   const endDate = searchParams.get("endDate") || undefined;
   const filters = startDate && endDate ? { startDate, endDate } : { date };
+  const feedCostBasis: FeedCostBasis = searchParams.get("feedCostBasis") === "feedUsed"
+    ? "feedUsed"
+    : "feedIn";
   const kandangIdsParam = searchParams.get("kandangIds");
   const requestedIds = kandangIdsParam
     ? kandangIdsParam.split(",").map((id) => id.trim()).filter(Boolean)
@@ -40,7 +43,8 @@ export async function GET(request: Request) {
   const statuses = buildKandangStatuses(
     kandangRows.map(mapKandang),
     recordingRows.map(mapRecording),
-    filters
+    filters,
+    feedCostBasis
   );
 
   return NextResponse.json(statuses);
