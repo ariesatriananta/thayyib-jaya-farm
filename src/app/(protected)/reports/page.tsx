@@ -462,6 +462,11 @@ const Reports = () => {
 
                           baseRow["Telur (kg)"] = m.eggsKg;
                           baseRow["Telur (butir)"] = m.eggsCount;
+                          baseRow["Telur Putih (kg)"] = m.whiteEggsKg;
+                          baseRow["Telur Putih (butir)"] = m.whiteEggsCount;
+                          baseRow["Telur BS (butir)"] = m.brokenEggsCount;
+                          baseRow["Total Telur (kg)"] = m.totalEggsKg;
+                          baseRow["Total Telur (butir)"] = m.totalEggsCount;
 
                           if (isAdmin) {
                             baseRow["Harga Telur"] = Math.round(m.eggsPriceKg);
@@ -473,8 +478,8 @@ const Reports = () => {
 
                           if (isAdmin) {
                             baseRow["HPP"] = Math.round(
-                              m.eggsKg > 0
-                                ? (m.feedInKg * m.feedPriceKg) / m.eggsKg
+                              m.totalEggsKg > 0
+                                ? (m.feedInKg * m.feedPriceKg) / m.totalEggsKg
                                 : 0
                             );
                             baseRow["Profit"] = Math.round(m.hpp);
@@ -527,6 +532,11 @@ const Reports = () => {
                           {isAdmin && <TableHead className="text-right">Harga Pakan</TableHead>}
                           <TableHead className="text-right">Telur (kg)</TableHead>
                           <TableHead className="text-right">Telur (butir)</TableHead>
+                          <TableHead className="text-right">Putih (kg)</TableHead>
+                          <TableHead className="text-right">Putih (butir)</TableHead>
+                          <TableHead className="text-right">BS (butir)</TableHead>
+                          <TableHead className="text-right">Total (kg)</TableHead>
+                          <TableHead className="text-right">Total (butir)</TableHead>
                           {isAdmin && <TableHead className="text-right">Harga Telur</TableHead>}
                           <TableHead className="text-right">FCR</TableHead>
                           <TableHead className="text-right">HDP%</TableHead>
@@ -557,6 +567,11 @@ const Reports = () => {
                             )}
                             <TableCell className="text-right">{m.eggsKg}</TableCell>
                             <TableCell className="text-right">{m.eggsCount.toLocaleString()}</TableCell>
+                            <TableCell className="text-right">{m.whiteEggsKg}</TableCell>
+                            <TableCell className="text-right">{m.whiteEggsCount.toLocaleString()}</TableCell>
+                            <TableCell className="text-right">{m.brokenEggsCount.toLocaleString()}</TableCell>
+                            <TableCell className="text-right font-medium">{m.totalEggsKg}</TableCell>
+                            <TableCell className="text-right font-medium">{m.totalEggsCount.toLocaleString()}</TableCell>
                             {isAdmin && (
                               <TableCell className="text-right">
                                 Rp {Math.round(m.eggsPriceKg).toLocaleString('id-ID')}
@@ -570,8 +585,8 @@ const Reports = () => {
                             {isAdmin && (
                               <TableCell className="text-right">
                                 Rp {Math.round(
-                                  m.eggsKg > 0
-                                    ? (m.feedInKg * m.feedPriceKg) / m.eggsKg
+                                  m.totalEggsKg > 0
+                                    ? (m.feedInKg * m.feedPriceKg) / m.totalEggsKg
                                     : 0
                                 ).toLocaleString('id-ID')}
                               </TableCell>

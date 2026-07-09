@@ -86,7 +86,7 @@ export function KandangStatusGrid({ statuses }: KandangStatusGridProps) {
                       <Egg className="w-3.5 h-3.5" />
                       Total Telur
                     </span>
-                    <span className="font-medium">{status.todayMetrics.eggsKg} kg</span>
+                    <span className="font-medium">{status.todayMetrics.totalEggsKg} kg</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground flex items-center gap-1.5">
@@ -114,8 +114,8 @@ export function KandangStatusGrid({ statuses }: KandangStatusGridProps) {
                       </span>
                       <span className="font-medium">
                         Rp {Math.round(
-                          status.todayMetrics.eggsKg > 0
-                            ? (status.todayMetrics.feedInKg * status.todayMetrics.feedPriceKg) / status.todayMetrics.eggsKg
+                          status.todayMetrics.totalEggsKg > 0
+                            ? status.todayMetrics.feedCost / status.todayMetrics.totalEggsKg
                             : 0
                         ).toLocaleString('id-ID')}
                       </span>

@@ -411,6 +411,7 @@ const Dashboard = () => {
             revealDurationMs={700}
             revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
             subtitle={`${summary.totalEggsCount.toLocaleString()} butir`}
+            information="Total kg adalah telur normal ditambah telur putih. Total butir adalah telur normal, telur putih, dan telur BS selama periode terpilih."
             icon={Egg}
             variant="primary"
           />
@@ -425,6 +426,7 @@ const Dashboard = () => {
             revealDurationMs={730}
             revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
             subtitle={`${summary.totalWhiteEggsCount.toLocaleString()} butir | BS ${summary.totalBrokenEggsCount.toLocaleString()} butir`}
+            information="Menampilkan telur putih dalam kg dan butir, serta telur BS dalam butir selama periode terpilih."
             icon={Egg}
           />
           <StatCard
@@ -437,6 +439,7 @@ const Dashboard = () => {
             revealDelayMs={100}
             revealDurationMs={760}
             revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
+            information="Jumlah pakan terpakai selama periode terpilih, dihitung dari pakan masuk dikurangi sisa pakan pada setiap pencatatan."
             icon={Wheat}
             variant="secondary"
           />
@@ -450,6 +453,7 @@ const Dashboard = () => {
             revealDelayMs={160}
             revealDurationMs={800}
             revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
+            information="Jumlah seluruh pakan yang masuk selama periode terpilih."
             icon={Package}
           />
           <StatCard
@@ -461,6 +465,7 @@ const Dashboard = () => {
             revealDelayMs={180}
             revealDurationMs={820}
             revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
+            information="Jumlah ayam mati yang tercatat selama periode terpilih."
             icon={Skull}
             variant={summary.totalDeadChickens > 10 ? 'danger' : 'default'}
           />
@@ -474,6 +479,7 @@ const Dashboard = () => {
             revealDurationMs={880}
             revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
             subtitle="Target: 2.2"
+            information="Rata-rata FCR harian. FCR harian dihitung dari pakan terpakai dibagi total produksi kg telur normal dan telur putih."
             icon={Activity}
           />
           <StatCard
@@ -487,6 +493,7 @@ const Dashboard = () => {
             revealDurationMs={940}
             revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
             subtitle="Target: 90%"
+            information="Rata-rata HDP harian. HDP harian dihitung dari total butir telur normal, putih, dan BS dibagi jumlah ayam hidup, lalu dikali 100%."
             icon={TrendingUp}
             variant={summary.averageHDP >= 85 ? 'primary' : summary.averageHDP >= 75 ? 'warning' : 'danger'}
           />
@@ -501,6 +508,7 @@ const Dashboard = () => {
               revealDelayMs={440}
               revealDurationMs={1040}
               revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
+              information="Total revenue telur normal dan telur putih selama periode terpilih. Telur putih sementara menggunakan harga per kg yang sama dengan telur normal."
               icon={Coins}
               valueClassName="text-xl"
             />
@@ -516,6 +524,7 @@ const Dashboard = () => {
               revealDelayMs={480}
               revealDurationMs={1080}
               revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
+              information={`Total biaya pakan berdasarkan ${feedCostBasis === 'feedUsed' ? 'pakan terpakai' : 'pakan masuk'} dikali harga pakan per kg pada setiap pencatatan.`}
               icon={Receipt}
               valueClassName="text-xl"
             />
@@ -531,6 +540,7 @@ const Dashboard = () => {
               revealDelayMs={520}
               revealDurationMs={1120}
               revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
+              information={`Revenue telur dikurangi biaya ${feedCostBasis === 'feedUsed' ? 'pakan terpakai' : 'pakan masuk'} selama periode terpilih.`}
               icon={BadgeDollarSign}
               valueClassName="text-xl"
             />
@@ -546,6 +556,7 @@ const Dashboard = () => {
               revealDelayMs={560}
               revealDurationMs={1160}
               revealEasing="cubic-bezier(0.16, 1, 0.3, 1)"
+              information={`Biaya ${feedCostBasis === 'feedUsed' ? 'pakan terpakai' : 'pakan masuk'} dibagi total produksi kg telur normal dan telur putih.`}
               icon={Calculator}
               valueClassName="text-xl"
             />

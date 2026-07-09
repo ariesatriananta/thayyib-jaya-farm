@@ -68,6 +68,8 @@ function buildPeriodMetrics(
       acc.whiteEggsKg += metric.whiteEggsKg;
       acc.whiteEggsCount += metric.whiteEggsCount;
       acc.brokenEggsCount += metric.brokenEggsCount;
+      acc.totalEggsKg += metric.totalEggsKg;
+      acc.totalEggsCount += metric.totalEggsCount;
       acc.deadChickenCount += metric.deadChickenCount;
       acc.feedCost += getMetricFeedCost(metric, feedCostBasis);
       acc.eggsRevenue += metric.eggsRevenue;
@@ -82,6 +84,8 @@ function buildPeriodMetrics(
       whiteEggsKg: 0,
       whiteEggsCount: 0,
       brokenEggsCount: 0,
+      totalEggsKg: 0,
+      totalEggsCount: 0,
       deadChickenCount: 0,
       feedCost: 0,
       eggsRevenue: 0,
@@ -99,7 +103,7 @@ function buildPeriodMetrics(
 
   const totalChickenToday = getTotalChickenToday(kandang, allRecordings, lastMetric.date);
   const feedPriceKg = totals.feedInKg > 0 ? totals.feedCost / totals.feedInKg : 0;
-  const eggsPriceKg = totals.eggsKg > 0 ? totals.eggsRevenue / totals.eggsKg : 0;
+  const eggsPriceKg = totals.totalEggsKg > 0 ? totals.eggsRevenue / totals.totalEggsKg : 0;
   const hpp = totals.eggsRevenue - totals.feedCost;
   const dateObj = new Date(lastMetric.date);
 
@@ -119,6 +123,8 @@ function buildPeriodMetrics(
     whiteEggsKg: Number(totals.whiteEggsKg.toFixed(1)),
     whiteEggsCount: totals.whiteEggsCount,
     brokenEggsCount: totals.brokenEggsCount,
+    totalEggsKg: Number(totals.totalEggsKg.toFixed(1)),
+    totalEggsCount: totals.totalEggsCount,
     deadChickenCount: totals.deadChickenCount,
     feedCost: Number(totals.feedCost.toFixed(2)),
     eggsRevenue: Number(totals.eggsRevenue.toFixed(2)),
@@ -160,8 +166,8 @@ export function buildDashboardSummary(
   const totalHpp = totalEggsRevenue - totalFeedCost;
 
   return {
-    totalEggsKg: Number(metrics.reduce((sum, m) => sum + m.eggsKg, 0).toFixed(1)),
-    totalEggsCount: metrics.reduce((sum, m) => sum + m.eggsCount, 0),
+    totalEggsKg: Number(metrics.reduce((sum, m) => sum + m.totalEggsKg, 0).toFixed(1)),
+    totalEggsCount: metrics.reduce((sum, m) => sum + m.totalEggsCount, 0),
     totalWhiteEggsKg: Number(metrics.reduce((sum, m) => sum + m.whiteEggsKg, 0).toFixed(1)),
     totalWhiteEggsCount: metrics.reduce((sum, m) => sum + m.whiteEggsCount, 0),
     totalBrokenEggsCount: metrics.reduce((sum, m) => sum + m.brokenEggsCount, 0),
@@ -282,13 +288,13 @@ export function buildReportData(
       eggsRevenue: 0,
       eggsCount: 0,
     };
-    existing.eggsKg += metric.eggsKg;
+    existing.eggsKg += metric.totalEggsKg;
     existing.feedInKg += metric.feedInKg;
     existing.feedUsedKg += metric.feedUsedKg;
     existing.hdpPercents.push(metric.hdpPercent);
     existing.feedCost += metric.feedCost;
     existing.eggsRevenue += metric.eggsRevenue;
-    existing.eggsCount += metric.eggsCount;
+    existing.eggsCount += metric.totalEggsCount;
     dateMap.set(metric.date, existing);
   }
 
@@ -329,7 +335,7 @@ export function buildReportData(
 
     existing.hdps.push(metric.hdpPercent);
     if (metric.fcr > 0) existing.fcrs.push(metric.fcr);
-    existing.totalEggsKg += metric.eggsKg;
+    existing.totalEggsKg += metric.totalEggsKg;
     existing.totalFeedUsed += metric.feedUsedKg;
     existing.recordCount++;
 

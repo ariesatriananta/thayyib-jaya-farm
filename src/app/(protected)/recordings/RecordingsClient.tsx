@@ -294,8 +294,8 @@ const RecordingsClient = () => {
                         {role === 'admin' && (
                           <TableCell className="text-right">
                             Rp {Math.round(
-                              m.eggsKg > 0
-                                ? (m.feedInKg * m.feedPriceKg) / m.eggsKg
+                              m.totalEggsKg > 0
+                                ? (m.feedInKg * m.feedPriceKg) / m.totalEggsKg
                                 : 0
                             ).toLocaleString('id-ID')}
                           </TableCell>

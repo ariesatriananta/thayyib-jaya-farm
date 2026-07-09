@@ -47,6 +47,8 @@ export interface DailyMetrics {
   whiteEggsKg: number;
   whiteEggsCount: number;
   brokenEggsCount: number;
+  totalEggsKg: number;
+  totalEggsCount: number;
   deadChickenCount: number;
   feedCost: number;
   eggsRevenue: number;

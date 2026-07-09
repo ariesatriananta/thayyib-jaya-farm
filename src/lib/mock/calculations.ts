@@ -64,10 +64,15 @@ export function buildDailyMetrics(
   const date = new Date(recording.date);
   const totalChickenToday = getTotalChickenToday(kandang, allRecordings, recording.date);
   const feedUsedKg = calculateFeedUsed(recording.feedInKg, recording.feedRemainingKg);
-  const fcr = calculateFCR(feedUsedKg, recording.eggsKg);
-  const hdpPercent = calculateHDP(recording.eggsCount, totalChickenToday);
+  const whiteEggsKg = recording.whiteEggsKg ?? 0;
+  const whiteEggsCount = recording.whiteEggsCount ?? 0;
+  const brokenEggsCount = recording.brokenEggsCount ?? 0;
+  const totalEggsKg = recording.eggsKg + whiteEggsKg;
+  const totalEggsCount = recording.eggsCount + whiteEggsCount + brokenEggsCount;
+  const fcr = calculateFCR(feedUsedKg, totalEggsKg);
+  const hdpPercent = calculateHDP(totalEggsCount, totalChickenToday);
   const feedCost = Number((recording.feedInKg * recording.feedPriceKg).toFixed(2));
-  const eggsRevenue = Number((recording.eggsKg * recording.eggsPriceKg).toFixed(2));
+  const eggsRevenue = Number((totalEggsKg * recording.eggsPriceKg).toFixed(2));
   const hpp = Number((eggsRevenue - feedCost).toFixed(2));
 
   return {
@@ -83,9 +88,11 @@ export function buildDailyMetrics(
     eggsKg: recording.eggsKg,
     eggsPriceKg: recording.eggsPriceKg,
     eggsCount: recording.eggsCount,
-    whiteEggsKg: recording.whiteEggsKg ?? 0,
-    whiteEggsCount: recording.whiteEggsCount ?? 0,
-    brokenEggsCount: recording.brokenEggsCount ?? 0,
+    whiteEggsKg,
+    whiteEggsCount,
+    brokenEggsCount,
+    totalEggsKg: Number(totalEggsKg.toFixed(2)),
+    totalEggsCount,
     deadChickenCount: recording.deadChickenCount,
     feedCost,
     eggsRevenue,

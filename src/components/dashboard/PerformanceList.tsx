@@ -63,7 +63,7 @@ export function PerformanceList({ title, statuses, variant, periodLabel }: Perfo
                 <div>
                   <p className="font-medium text-sm">{status.kandang.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    Total {status.todayMetrics?.eggsCount.toLocaleString()} butir
+                    Total {status.todayMetrics?.totalEggsCount.toLocaleString()} butir
                   </p>
                 </div>
               </div>

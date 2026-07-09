@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from 'react';
-import { LucideIcon } from 'lucide-react';
+import { Info, LucideIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
 interface StatCardProps {
@@ -18,6 +19,7 @@ interface StatCardProps {
   revealEasing?: string;
   valueClassName?: string;
   subtitle?: string;
+  information?: string;
   icon: LucideIcon;
   trend?: {
     value: number;
@@ -49,11 +51,13 @@ export function StatCard({
   revealEasing,
   valueClassName,
   subtitle,
+  information,
   icon: Icon,
   trend,
   variant = 'default',
 }: StatCardProps) {
   const [animatedValue, setAnimatedValue] = useState(animatedNumber ?? 0);
+  const [informationOpen, setInformationOpen] = useState(false);
 
   useEffect(() => {
     if (animatedNumber === undefined) return;
@@ -115,6 +119,32 @@ export function StatCard({
             <Icon className="w-5 h-5" />
           </div>
         </div>
+        {information && (
+          <div className="mt-3 flex justify-end">
+            <Popover open={informationOpen} onOpenChange={setInformationOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={`Informasi ${title}`}
+                  className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  onMouseEnter={() => setInformationOpen(true)}
+                  onMouseLeave={() => setInformationOpen(false)}
+                >
+                  <Info className="h-4 w-4" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                side="top"
+                align="end"
+                className="w-72 text-sm leading-relaxed"
+                onMouseEnter={() => setInformationOpen(true)}
+                onMouseLeave={() => setInformationOpen(false)}
+              >
+                {information}
+              </PopoverContent>
+            </Popover>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
